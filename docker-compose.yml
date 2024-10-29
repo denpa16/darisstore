@@ -41,13 +41,11 @@ x-backend_environment: &backend_environment
 services:
 
   backend:
-    image: registry.gitlab.idacloud.ru/idaproject/gals/backend:${TAG:-latest}
     build:
       context: ./backend
     <<: *backend_environment
 
   db:
-    image: registry.gitlab.idacloud.ru/idaproject/gals/db:${TAG:-latest}
     build:
       context: ./db
     environment:
@@ -61,7 +59,8 @@ services:
 
 
   celery:
-    image: registry.gitlab.idacloud.ru/idaproject/gals/backend:${TAG:-latest}
+    build:
+      context: ./backend
     command: poetry run celery -A config worker -l info -c 1 -n celery@dats.com -Q celery
     depends_on:
       - db
@@ -69,7 +68,8 @@ services:
     <<: *backend_environment
 
   celery-beat:
-    image: registry.gitlab.idacloud.ru/idaproject/gals/backend:${TAG:-latest}
+    build:
+      context: ./backend
     command: poetry run celery -A config worker -B
     depends_on:
       - db
@@ -77,10 +77,9 @@ services:
     <<: *backend_environment
 
   flower:
-    image: registry.gitlab.idacloud.ru/idaproject/gals/flower:${TAG:-latest}
-    command: python -m flower flower --address=0.0.0.0 --port=5555 --url_prefix=flower --persistent=True
     build:
       context: ./flower
+    command: python -m flower flower --address=0.0.0.0 --port=5555 --url_prefix=flower --persistent=True
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - FLOWER_PORT=5555
@@ -89,7 +88,6 @@ services:
       - celery
 
   imgproxy:
-    image: registry.gitlab.idacloud.ru/idaproject/gals/imgproxy:${TAG:-latest}
     build:
       context: imgproxy
     environment:
