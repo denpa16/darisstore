@@ -1,0 +1,107 @@
+version: '3.8'
+
+x-backend_environment: &backend_environment
+  environment:
+    - DEBUG
+    - API_DOCS_ENABLE
+    - SECRET_KEY
+    - POSTGRES_PASSWORD
+    - POSTGRES_HOST
+    - POSTGRES_PORT
+    - POSTGRES_NAME
+    - POSTGRES_USER
+    - REDIS_HOST
+    - REDIS_PORT
+    - SITE_HOST
+    - EMAIL_HOST
+    - EMAIL_HOST_USER
+    - EMAIL_HOST_PASSWORD
+    - EMAIL_PORT
+    - EMAIL_USE_TLS
+    - SERVER_EMAIL
+    - SENTRY_DSN
+    - SENTRY_ENVIRONMENT=${CI_COMMIT_REF_SLUG:-production}
+    - SENTRY_RELEASE=${CI_PIPELINE_ID}
+    - YND_ACCESS_KEY_ID
+    - YND_SECRET_ACCESS_KEY
+    - YND_STORAGE_BUCKET_NAME
+    - YND_STORAGE_ENDPOINT_URL
+    - IMGPROXY_DEVELOPMENT_ERRORS_MODE
+    - IMGPROXY_MAX_SRC_RESOLUTION
+    - IMGPROXY_ALLOWED_SOURCES
+    - IMGPROXY_SITE_HOST
+    - IMGPROXY_KEY
+    - IMGPROXY_SALT
+    - CADVISOR_URL
+    - IMGPROXY_URL
+    - AGENT_URL
+    - YND_CAPTCHA_SERVER_KEY
+
+
+services:
+
+  backend:
+    image: registry.gitlab.idacloud.ru/idaproject/gals/backend:${TAG:-latest}
+    build:
+      context: ./backend
+    <<: *backend_environment
+
+  db:
+    image: registry.gitlab.idacloud.ru/idaproject/gals/db:${TAG:-latest}
+    build:
+      context: ./db
+    environment:
+      - POSTGRES_PASSWORD
+      - POSTGRES_PORT
+      - POSTGRES_NAME
+      - POSTGRES_USER
+
+  redis:
+    image: redis:6.2-alpine
+
+
+  celery:
+    image: registry.gitlab.idacloud.ru/idaproject/gals/backend:${TAG:-latest}
+    command: poetry run celery -A config worker -l info -c 1 -n celery@dats.com -Q celery
+    depends_on:
+      - db
+      - redis
+    <<: *backend_environment
+
+  celery-beat:
+    image: registry.gitlab.idacloud.ru/idaproject/gals/backend:${TAG:-latest}
+    command: poetry run celery -A config worker -B
+    depends_on:
+      - db
+      - redis
+    <<: *backend_environment
+
+  flower:
+    image: registry.gitlab.idacloud.ru/idaproject/gals/flower:${TAG:-latest}
+    command: python -m flower flower --address=0.0.0.0 --port=5555 --url_prefix=flower --persistent=True
+    build:
+      context: ./flower
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - FLOWER_PORT=5555
+      - FLOWER_BASIC_AUTH
+    depends_on:
+      - celery
+
+  imgproxy:
+    image: registry.gitlab.idacloud.ru/idaproject/gals/imgproxy:${TAG:-latest}
+    build:
+      context: imgproxy
+    environment:
+      - IMGPROXY_DEVELOPMENT_ERRORS_MODE
+      - IMGPROXY_ALLOWED_SOURCES
+      - IMGPROXY_USE_S3=true
+      - IMGPROXY_LOG_LEVEL=debug
+      - IMGPROXY_KEY
+      - IMGPROXY_SALT
+      - AWS_ACCESS_KEY_ID
+      - IMGPROXY_S3_ENDPOINT
+      - AWS_SECRET_ACCESS_KEY
+      - IMGPROXY_SENTRY_DSN
+      - IMGPROXY_MAX_SRC_RESOLUTION
+      - IMGPROXY_ALLOW_ORIGIN

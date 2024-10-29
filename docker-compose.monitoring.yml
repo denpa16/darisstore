@@ -1,0 +1,37 @@
+version: "3.9"
+
+x-monitoring_environment: &monitoring_environment
+  environment:
+    - AGENT_MODE=flow
+    - LOKI_USERNAME
+    - LOKI_PASSWORD
+    - SERVER_NAME
+    - PROJECT_NAME
+    - CADVISOR_URL
+    - IMGPROXY_URL
+    #      - KRAKEND_URL
+    - AGENT_URL
+    - LOKI_URL
+    - BRANCH_NAME
+    - SITE_HOST
+    - DB_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_NAME}?sslmode=disable
+
+services:
+  agent:
+    image: registry.gitlab.idacloud.ru/idaproject/internal/grafana-agent-common/agent:v1.0.1
+    <<: *monitoring_environment
+    volumes:
+      - /:/rootfs:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/log/journal/:/var/log/journal/:ro
+      - '/:/host:ro,rslave'
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1024M
+        reservations:
+          cpus: '0.2'
+          memory: 128M

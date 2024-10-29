@@ -1,0 +1,87 @@
+/*  Fonts */
+$base-font: "Montserrat", sans-serif;
+$base-font-size: 1.6rem;
+$body-color: #4c4c4c;
+
+/* Colors */
+$base-0: #fff;
+$base-50: #f6f6f6;
+$base-75: #f3f3f3;
+$base-100: #e6e6e6;
+$base-200: #ccc;
+$base-400: #999;
+$base-500: #808080;
+$base-600: $body-color;
+$base-800: #333;
+$base-900: #000;
+
+$primary-100: #fce4e3;
+$primary-200: #f7b6b5;
+$primary-300: #f39595;
+$primary-600: #ed5a59;
+$primary-900: #e82c2b;
+
+$additional-success-500: #65c46680;
+$additional-success-900: #65c466;
+
+$opacity-main-10: rgba($base-900, 10%);
+$opacity-main-20: rgba($base-900, 20%);
+$opacity-main-40: rgba($base-900, 40%);
+$opacity-main-60: rgba($base-900, 60%);
+$opacity-main-80: rgba($base-900, 80%);
+
+$opacity-white-10: rgba($base-0, 10%);
+$opacity-white-20: rgba($base-0, 20%);
+$opacity-white-40: rgba($base-0, 40%);
+$opacity-white-60: rgba($base-0, 60%);
+$opacity-white-80: rgba($base-0, 80%);
+
+$gradient-down: linear-gradient(180deg, rgba($base-800, 0.64) 0%, rgba($base-800, 0.00) 76.56%);
+$gradient-up: linear-gradient(0deg, rgba($base-800, 0.64) 0%, rgba($base-800, 0.00) 100%);
+
+/* Breakpoints */
+$breakpoints: (
+    mobile: 0,
+    tablet-sm: 768px,
+    tablet: 1024px,
+    laptop: 1280px,
+    desktop: 1440px,
+    ultra: 1921px,
+);
+
+/* Grid */
+$aside-padding: 5.2rem;
+$aside-padding-tablet: 3.2rem;
+$aside-padding-mobile: 2rem;
+$header-h: 5.6rem;
+$header-h-tablet: 7.2rem;
+$header-h-mobile: 5.6rem;
+$anchor-offset: 2rem;
+$header-z-index: 100;
+$footer-h: 20rem;
+$aside-base-padding-tablet: .8rem;
+$aside-base-padding-mobile: .8rem;
+$header-tab-h: calc(100vh - 12rem);
+$header-h-project-mobile: 6.4rem;
+$menu-h-tablet: 6.8rem;
+$menu-h-mobile: 6.4rem;
+
+/* Box-shadow */
+$box-shadow-default: 0 .4rem 3.8rem 0 rgba($base-600, 0.08);
+$box-shadow-tabs: .1rem .1rem .4rem 0 rgba($base-600, 0.08);
+
+/* Transitions */
+$default-transition: .3s ease-in-out;
+$slow-transition: 1s ease-in-out;
+
+/* Text */
+$text-shadow: 0 1.6rem 2.4rem rgba(0 0 0 / 6%), 0 2px .6rem rgba(0 0 0 / 4%), 0 0 1px rgba(0 0 0 / 4%);
+$text-shadow-mobile: 0 10px 20px rgba(0 0 0 / 4%), 0 2px 6px rgba(0 0 0 / 4%), 0 0 1px rgba(0 0 0 / 4%);
+
+/* PDF */
+$pdf-height: 1120px;
+$pdf-width: 792px;
+$pdf-diff: 1.33;
+$pdf-footer-h: 120px * $pdf-diff;
+$pdf-header-h: 60px * $pdf-diff;
+$pdf-header-offset: 42px * $pdf-diff;

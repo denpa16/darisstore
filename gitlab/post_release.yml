@@ -1,0 +1,13 @@
+sentry-release:
+  stage: post_release
+  image: getsentry/sentry-cli
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+  before_script:
+    - echo "release"
+  script:
+    - "VERSION=$CI_COMMIT_SHA"
+    - sentry-cli --url="$SENTRY_URL" --auth-token="$SENTRY_AUTH_TOKEN" info || true
+    - sentry-cli --url="$SENTRY_URL" --auth-token="$SENTRY_AUTH_TOKEN" releases new -p <name_project_in_setnry> "$VERSION"
+    - sentry-cli --url="$SENTRY_URL" --auth-token="$SENTRY_AUTH_TOKEN" releases set-commits --auto "$VERSION"
+    - sentry-cli --url="$SENTRY_URL" --auth-token="$SENTRY_AUTH_TOKEN" releases finalize "$VERSION"

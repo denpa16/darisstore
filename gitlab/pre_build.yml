@@ -1,0 +1,19 @@
+pre_build:frontend:packages:
+  stage: pre_build
+  rules:
+    - if: $CI_COMMIT_BRANCH =~ /^(main|develop)$/
+      changes:
+        - frontend/package.json
+        - frontend/package-lock.json
+  script:
+    - docker pull $NPM_PACKAGES || true
+    - >
+      docker build
+      --pull
+      --build-arg NPM_TOKEN=${NPM_TOKEN}
+      --build-arg NPM_REGISTRY=${NPM_REGISTRY}
+      --tag $NPM_PACKAGES
+      --cache-from $NPM_PACKAGES
+      --file ./frontend/Dockerfile.packages
+      ./frontend
+    - docker push $NPM_PACKAGES

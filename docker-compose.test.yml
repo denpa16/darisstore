@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      cache_from: [registry.gitlab.idacloud.ru/idaproject/gals/backend]
+      args:
+        POETRY_PARAMS: "--no-dev"
+    entrypoint: ./entrypoint.test.sh
+    restart: "no"
+    depends_on:
+      - db
+      - redis
+    environment:
+      - DEBUG=False
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_NAME=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+
+  db:
+    restart: "no"
+    volumes:
+      - postgresdata:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PORT=5432
+      - POSTGRES_NAME=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+
+  redis:
+    volumes:
+      - redisdata:/data
+    restart: "no"
+
+volumes:
+  redisdata:
+  postgresdata:
