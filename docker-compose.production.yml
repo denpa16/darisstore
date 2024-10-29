@@ -14,10 +14,8 @@ x-nginx_environment: &nginx_environment
 
 services:
   nginx:
-    image: registry.gitlab.idacloud.ru/idaproject/gals/nginx:${TAG:-latest}
     build:
       context: ./nginx
-      cache_from: [ "registry.gitlab.idacloud.ru/idaproject/gals/nginx:${CACHE_FROM_TAG:-latest}" ]
     restart: always
     depends_on:
       - backend
@@ -42,7 +40,6 @@ services:
     restart: always
     build:
       context: ./backend
-      cache_from: [ "registry.gitlab.idacloud.ru/idaproject/gals/backend:${CACHE_FROM_TAG:-latest}" ]
       args:
         POETRY_PARAMS: "--no-dev"
     entrypoint: ./entrypoint.production.sh
