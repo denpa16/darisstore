@@ -23,6 +23,7 @@ jobs:
         run:  docker compose -f docker-compose.yml -f docker-compose.production.yml build nginx
 
   deploy:
+    needs: ["build"]
     runs-on: self-hosted
     environment:
       name: ${{ github.ref_name }}
