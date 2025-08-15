@@ -17,10 +17,16 @@ jobs:
         uses: actions/checkout@v3
       - name: build frontend
         run:  docker compose -f docker-compose.yml -f docker-compose.frontend.yml build frontend
+        env:
+          BRANCH_NAME: ${{ github.ref_name }}
       - name: build backend
         run:  docker compose -f docker-compose.yml -f docker-compose.production.yml build backend
+        env:
+          BRANCH_NAME: ${{ github.ref_name }}
       - name: build nginx
         run:  docker compose -f docker-compose.yml -f docker-compose.production.yml build nginx
+        env:
+          BRANCH_NAME: ${{ github.ref_name }}
 
   deploy:
     needs: ["build"]
