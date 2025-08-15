@@ -91,5 +91,12 @@ services:
     <<: *app_environment
 
 volumes:
+  local_static:
+  nuxt:
+  acme.sh:
+  certs:
+  static:
+  redisdata:
   postgresdata:
-  internal:
+  api_cache:
+  nginx_cache:
