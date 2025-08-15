@@ -1,6 +1,6 @@
 .PpoiField {
     display: inline-block;
-    width: 600px;
+    width: 50%;
 }
 
 .PpoiField input.PpoiField__input {

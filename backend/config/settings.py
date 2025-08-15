@@ -10,11 +10,10 @@ SITE_HOST = getenv("SITE_HOST")
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = getenv("SECRET_KEY")
 
-TESTING = "test" in argv or any(["pytest" in a for a in argv])
-DEBUG = getenv("DEBUG", "True") == "True" and not TESTING
+TESTING = "test" in argv or any("pytest" in a for a in argv)
+DEBUG = getenv("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = ["*"]
-CSRF_TRUSTED_ORIGINS = [f"https://{SITE_HOST}"]
 
 # Application definition
 
@@ -41,11 +40,10 @@ INSTALLED_APPS = [
     "rest_framework",
     "location_field.apps.DefaultConfig",
     "djcelery_email",
-    # main apps
-    "users.apps.UserConfig",
+    # apps A-Z
     "common.apps.CommonConfig",
     "common.drf_tracking.apps.RestFrameworkTrackingConfig",
-    # apps
+    "users.apps.UserConfig",
 ]
 
 MIDDLEWARE = [
@@ -58,7 +56,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django_user_agents.middleware.UserAgentMiddleware",
 ]
-if DEBUG:
+if DEBUG and not TESTING:
     INSTALLED_APPS.append("debug_toolbar")
     MIDDLEWARE.append("debug_toolbar.middleware.DebugToolbarMiddleware")
 
@@ -67,6 +65,7 @@ if DEBUG:
 
     DEBUG_TOOLBAR_CONFIG = {"SHOW_TOOLBAR_CALLBACK": "config.settings.show_toolbar_callback"}
 
+CSRF_TRUSTED_ORIGINS = [f"https://{SITE_HOST}"]
 ROOT_URLCONF = "config.urls"
 
 TEMPLATES = [
@@ -93,17 +92,17 @@ WSGI_APPLICATION = "config.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": getenv("POSTGRES_NAME"),
-        "USER": getenv("POSTGRES_USER"),
-        "PASSWORD": getenv("POSTGRES_PASSWORD"),
-        "HOST": "db",
-        "PORT": getenv("POSTGRES_PORT"),
+        "NAME": getenv("POSTGRES_NAME") if SITE_HOST != "localhost" else "postgres",
+        "USER": getenv("POSTGRES_USER") if SITE_HOST != "localhost" else "postgres",
+        "PASSWORD": getenv("POSTGRES_PASSWORD") if SITE_HOST != "localhost" else "postgres",
+        "HOST": getenv("POSTGRES_HOST") if SITE_HOST != "localhost" else "db",
+        "PORT": getenv("POSTGRES_PORT") if SITE_HOST != "localhost" else 5432,
         "CONN_MAX_AGE": 600,
-    }
+    },
 }
 
 # Password validation
-# https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
+# https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -210,18 +209,32 @@ CKEDITOR_CONFIGS = {
             {"name": "colors", "items": ["TextColor", "BGColor"]},
         ],
         "toolbar": "Custom",
-        "extraPlugins": ["liststyle"],
-    }
+        "width": "100%",
+        "extraPlugins": ",".join(["liststyle"]),
+    },
 }
+
 
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    # "DEFAULT_RENDERER_CLASSES": ["drf_orjson_renderer.renderers.ORJSONRenderer"],
     "DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.DjangoFilterBackend",),
     "DEFAULT_AUTHENTICATION_CLASSES": ["rest_framework.authentication.SessionAuthentication"],
 }
 if not DEBUG:
     REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = ["rest_framework.renderers.JSONRenderer"]
+
+# logging
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "crm": {"format": "%(asctime)s %(name)-12s %(levelname)-8s %(message)s"},
+    },
+    "handlers": {
+        "console": {"class": "logging.StreamHandler", "formatter": "crm"},
+    },
+    "loggers": {"": {"level": "INFO", "handlers": ["console"]}},
+}
 
 # Email
 EMAIL_BACKEND = "djcelery_email.backends.CeleryEmailBackend"
@@ -243,12 +256,17 @@ if TESTING:
     CELERY_EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 
 
-AUTH_USER_MODEL = "user.User"
+AUTH_USER_MODEL = "users.User"
 # SMS
-SMS_LOGIN = getenv("SMS_LOGIN", "")
-SMS_PASSWORD = getenv("SMS_PASSWORD", "")
 SMS_DEBUG = DEBUG or TESTING
-SMSR_BASE_URL = "https://smsc.ru/sys/send.php"
+SMSC_BASE_URL = "https://smsc.ru/sys/send.php"
+SMSC_LOGIN = getenv("SMSC_LOGIN")
+SMSC_PASSWORD = getenv("SMSC_PASSWORD")
+
+WEBSMS_BASE_URL = "https://cab.websms.ru//http_in5.asp"
+WEBSMS_LOGIN = getenv("WEBSMS_LOGIN")
+WEBSMS_PASSWORD = getenv("WEBSMS_PASSWORD")
+
 
 
 if "SENTRY_DSN" in environ:
@@ -281,11 +299,7 @@ REST_FRAMEWORK = {
 if not DEBUG:
     REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = ["rest_framework.renderers.JSONRenderer"]
 
-AUTHENTICATION_BACKENDS = [
-    "django.contrib.auth.backends.ModelBackend",
-    "users.backends.phone.PhoneBackend",
-    "users.backends.email.EmailBackend",
-]
+AUTHENTICATION_BACKENDS = ["django.contrib.auth.backends.ModelBackend"]
 
 # Django location_field
 LOCATION_FIELD_PATH = "/s/" + "location_field"
@@ -335,3 +349,13 @@ AWS_DEFAULT_ACL = None
 AWS_LOCATION = getenv("YND_LOCATION", "media")
 AWS_QUERYSTRING_AUTH = False
 AWS_S3_FILE_OVERWRITE = False
+
+# CRM
+KAFKA_SCHEMA_REGISTRY = getenv("KAFKA_SCHEMA_REGISTRY")
+KAFKA_BOOTSTRAP_SERVERS = getenv("KAFKA_BOOTSTRAP_SERVERS")
+KAFKA_GROUP_ID = getenv("KAFKA_GROUP_ID")
+
+# SLETATRU
+SLETATRU_URL = getenv("SLETATRU_URL")
+SLETATRU_LOGIN = getenv("SLETATRU_LOGIN")
+SLETATRU_PASSWORD = getenv("SLETATRU_PASSWORD")

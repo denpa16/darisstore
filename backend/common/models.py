@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 
-from django.db import models, connection
-from django.db.models.signals import pre_migrate
-
+from django.db import models
 
 from config.settings import IMGPROXY_FULL_PATH, IMGPROXY_SECURE
 
@@ -41,12 +39,3 @@ class MultiImageMeta(models.base.ModelBase):
             dct[f"{spec_name}_default"] = link + config + "plain/"
 
         return super().__new__(mcs, name, bases, dct)
-
-
-def app_pre_migration(sender, app_config, **kwargs):
-
-    cur = connection.cursor()
-    cur.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm;")
-
-
-pre_migrate.connect(app_pre_migration)

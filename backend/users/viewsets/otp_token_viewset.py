@@ -2,7 +2,9 @@ from django.utils.timezone import now
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.serializers import BaseSerializer
 from rest_framework.viewsets import GenericViewSet, mixins
 
 from ..models import EmailOTPToken, OTPToken
@@ -16,27 +18,30 @@ from ..serializers import (
 
 @extend_schema(tags=["OTP_Token"])
 class OTPTokenViewSet(mixins.CreateModelMixin, GenericViewSet):
-    """API для взаимодействия с СМС сервисом"""
+
+    """API для взаимодействия с СМС сервисом."""
 
     queryset = OTPToken.objects.all()
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> type[BaseSerializer]:
         if self.action == "create":
             return CreateOTPToken
         return ValidateOTPToken
 
-    def create(self, request, *args, **kwargs):
+    def create(self, request: Request) -> Response:
         serializer: CreateOTPToken = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save(commit=True)
         headers = self.get_success_headers(serializer.data)
         return Response(
-            CreateOTPToken(instance=instance).data, status=status.HTTP_201_CREATED, headers=headers
+            CreateOTPToken(instance=instance).data,
+            status=status.HTTP_201_CREATED,
+            headers=headers,
         )
 
     @action(methods=["POST"], detail=False, url_name="validate_otp_token")
-    def validate_otp_token(self, request):
-        """Валидация токена"""
+    def validate_otp_token(self, request: Request) -> Response:
+        """Валидация токена."""
         serializer: ValidateOTPToken = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         request.session["phone"] = request.data.get("phone")
@@ -46,16 +51,17 @@ class OTPTokenViewSet(mixins.CreateModelMixin, GenericViewSet):
 
 @extend_schema(tags=["Email OTP_Token"])
 class EmailOTPTokenViewSet(mixins.CreateModelMixin, GenericViewSet):
-    """API для подтверждения email"""
+
+    """API для подтверждения email."""
 
     queryset = EmailOTPToken.objects.all()
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> type[BaseSerializer]:
         if self.action == "create":
             return CreateEmailOTPToken
         return ValidateEmailOTPToken
 
-    def create(self, request, *args, **kwargs):
+    def create(self, request: Request) -> Response:
         serializer: CreateEmailOTPToken = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
@@ -67,8 +73,8 @@ class EmailOTPTokenViewSet(mixins.CreateModelMixin, GenericViewSet):
         )
 
     @action(methods=["POST"], detail=False, url_name="validate_otp_token")
-    def validate_otp_token(self, request):
-        """Валидация токена"""
+    def validate_otp_token(self, request: Request) -> Response:
+        """Валидация токена."""
         serializer: ValidateEmailOTPToken = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         request.session["email"] = request.data.get("email")

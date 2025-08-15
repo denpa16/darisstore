@@ -5,6 +5,8 @@ from users.models.user import User
 
 
 class CreationForm(UserCreationForm):
+    """Форма для создания пользователя."""
+
     patronymic = CharField(label="Отчество")
 
     class Meta:
@@ -13,6 +15,8 @@ class CreationForm(UserCreationForm):
 
 
 class ChangeForm(UserChangeForm):
+    """Форма для изменения пользователя."""
+
     class Meta:
         model = User
         fields = ("email",)

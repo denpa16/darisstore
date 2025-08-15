@@ -1,0 +1,60 @@
+.container {
+    max-width: 1920px;
+    margin: 0 auto;
+    padding: 0 $aside-padding;
+
+    @include respond-to(tablet) {
+        padding: 0 $aside-padding-mobile;
+    }
+}
+
+// Если нужно что-то визуально скрыть,
+// но поисковики должны это индексировать
+// Например: h1
+.visually-hidden:not(:focus) {
+    &:not(:active) {
+        position: absolute;
+        overflow: hidden;
+        width: 1px;
+        height: 1px;
+        clip: rect(1px 1px 1px 1px);
+        clip: rect(1px, 1px, 1px, 1px);
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .2rem;
+    width: 100%;
+
+    &-bullet {
+        display: flex;
+        width: .6rem;
+        height: .3rem;
+        border-radius: .4rem;
+        background: $base-300;
+        opacity: .6;
+
+        &-active {
+            width: 1.2rem;
+            background: $primary-500;
+            opacity: 1;
+        }
+    }
+
+    &__white {
+        .pagination-bullet {
+            background: $white;
+            opacity: .2;
+
+            &-active {
+                background: $white;
+                opacity: 1;
+            }
+        }
+    }
+}

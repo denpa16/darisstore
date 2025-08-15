@@ -1,0 +1,153 @@
+/*stylelint-disable*/
+
+@mixin respond-to($name, $bp: $breakpoints) {
+    $max: breakpoint-max($name, $bp);
+
+    @if $max {
+        @media (max-width: $max) {
+            @content;
+        }
+    } @else {
+        @content;
+    }
+}
+
+@mixin font($alias, $name, $weight) {
+    @font-face {
+        font-family: $alias;
+        src: url("~~assets/fonts/" + $name + ".woff2") format("woff2"),
+             url("~~assets/fonts/" + $name + ".woff") format("woff");
+        font-weight: $weight;
+        font-style: normal;
+        font-display: swap;
+    }
+}
+
+@mixin hover {
+    @media (hover), (-ms-high-contrast: none), (-ms-high-contrast: active) {
+        &:hover {
+            @content;
+        }
+    }
+}
+/*stylelint-enable*/
+
+@mixin text-clamp($lines) {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    text-overflow: ellipsis;
+    line-clamp: $lines;
+    -webkit-line-clamp: $lines;
+}
+
+/* Text */
+@mixin h-base {
+    font-family: $accent-font-family;
+    font-weight: 500;
+    letter-spacing: -.04rem;
+    text-transform: uppercase;
+}
+
+@mixin text($name) {
+    // Headings
+
+    @if $name == h1 {
+        @include h-base;
+
+        font-size: 6.4rem;
+        line-height: 8.64rem;
+        letter-spacing: -.04em;
+    }
+
+    @if $name == h2 {
+        @include h-base;
+
+        font-size: 4rem;
+        line-height: 5.4rem;
+    }
+
+    @if $name == h3 {
+        @include h-base;
+
+        font-size: 3.6rem;
+        line-height: 4.86rem;
+    }
+
+    @if $name == h4 {
+        @include h-base;
+
+        font-size: 2rem;
+        line-height: 2.7rem;
+        letter-spacing: -.04em;
+    }
+
+    @if $name == h5 {
+        @include h-base;
+
+        font-size: 1.6rem;
+        line-height: 2.16rem;
+    }
+
+    // Labels
+
+    @if $name == m18 {
+        font-weight: 500;
+        font-size: 1.8rem;
+        line-height: 2rem;
+    }
+
+    @if $name == m16 {
+        font-weight: 500;
+        font-size: 1.6rem;
+        line-height: 2rem;
+    }
+
+    @if $name == m14 {
+        font-weight: 500;
+        font-size: 1.4rem;
+        line-height: 1.6rem;
+    }
+
+    @if $name == m12 {
+        font-weight: 500;
+        font-size: 1.2rem;
+        line-height: 1.4rem;
+    }
+
+    // Paragraphs
+
+    @if $name == r16 {
+        font-size: 1.6rem;
+        line-height: 2.4rem;
+    }
+
+    @if $name == r14 {
+        font-size: 1.4rem;
+        line-height: 2rem;
+
+        @include respond-to(mobile) {
+            line-height: 1.6rem;
+        }
+    }
+
+    // Specials
+
+    @if $name == s24 {
+        font-weight: 600;
+        font-size: 2.4rem;
+        line-height: 2.6rem;
+    }
+
+    @if $name == s20 {
+        font-weight: 600;
+        font-size: 2rem;
+        line-height: 2.2rem;
+    }
+
+    @if $name == s16 {
+        font-weight: 600;
+        font-size: 1.6rem;
+        line-height: 1.8rem;
+    }
+}

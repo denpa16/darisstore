@@ -1,8 +1,8 @@
-from rest_framework.routers import DefaultRouter
+from rest_framework.routers import SimpleRouter
 
-from users.viewsets import EmailOTPTokenViewSet, OTPTokenViewSet, UserViewSet
+from users.viewsets import UserViewSet
 
-router = DefaultRouter()
+router = SimpleRouter()
 
-# users
+# A -Z sorting
 router.register(r"users", UserViewSet, "users")

@@ -3,9 +3,7 @@ from rest_framework.response import Response
 
 
 class BaseLimitOffsetPagination(LimitOffsetPagination):
-    """
-    Базовая пагинация
-    """
+    """Базовая пагинация."""
 
     default_limit = 12
 
@@ -13,6 +11,7 @@ class BaseLimitOffsetPagination(LimitOffsetPagination):
 class BasePageNumberPagination(PageNumberPagination):
     page_size = 6
     page_query_param = "page"
+    page_size_query_param = "page_size"
 
     def get_paginated_response(self, data):
         return Response(
@@ -22,5 +21,5 @@ class BasePageNumberPagination(PageNumberPagination):
                 "count": self.page.paginator.count,
                 "total_pages": self.page.paginator.num_pages,
                 "results": data,
-            }
+            },
         )

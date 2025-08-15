@@ -1,0 +1,31 @@
+export const INPUTS = {
+    name: {
+        name: 'name',
+        vModel: '',
+        regex: 'multilang',
+        mask: '',
+        label: 'Имя',
+        placeholder: 'Иван',
+        type: 'input',
+        errorMsg: '',
+        error: false,
+    },
+    phone: {
+        name: 'phone',
+        regex: 'phone',
+        mask: 'phone',
+        label: 'Телефон',
+        placeholder: '+7 ХХХ ХХХ ХХ ХХ',
+        type: 'input',
+        errorMsg: '',
+        error: false,
+    },
+    comment: {
+        name: 'message',
+        label: 'Сообщение',
+        placeholder: 'Введите сообщение',
+        type: 'textarea',
+        errorMsg: '',
+        error: false,
+    },
+}

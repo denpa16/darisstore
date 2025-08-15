@@ -1,0 +1,59 @@
+/* Colors */
+
+// Secondary
+$primary-150: #b0cdf2;
+$primary-300: #619ae5;
+$primary-500: #226FD3;
+$primary-700: #104993;
+$primary-900: #082449;
+
+// Gray
+$base-150: #F3F4F8;
+$base-200: #D9DCE3;
+$base-300: #CDCFD5;
+$base-500: #868A98;
+$base-700: #383B42;
+$base-900: #121314;
+
+// White
+$white: #fff;
+$white-24: rgba($white, .24);
+$white-32: rgba($white, .32);
+$white-50: rgba($white, .50);
+$white-72: rgba($white, .72);
+
+$error: #d63c32;
+
+/*  Fonts */
+$base-font: "Montserrat", sans-serif;
+$accent-font-family: "Normalidad-Extended", sans-serif;
+$base-font-size: 1.6rem;
+$body-color: $base-900;
+
+/* Breakpoints */
+$breakpoints: (
+    mobile: 0,
+    tablet-sm: 768px,
+    tablet: 1024px,
+    laptop: 1280px,
+    desktop: 1440px,
+);
+
+/* Grid */
+$header-h: 6.4rem;
+$header-h-mobile: 5.6rem;
+$header-z-index: 100;
+$promo-h: 4.4rem;
+$promo-h-tablet: 4rem;
+$footer-h: 28rem;
+$aside-padding: 6.4rem;
+$aside-padding-mobile: 1.6rem;
+$radius-max: 10rem;
+$radius-lg: 3.2rem;
+$radius-md: 2.4rem;
+
+/* Shadows */
+$box-shadow-default: 0 .6rem 1rem rgba(0 0 0 / 10%);
+
+/* Transitions */
+$default-transition: .4s ease;

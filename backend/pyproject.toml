@@ -3,7 +3,7 @@ name = "Template project"
 version = "0.1.0"
 description = "template project"
 license = "MIT"
-authors=["Denis Pavlov <den.pavlov.1998@list.ru>"]
+authors=["Egor Ponyavin <ep@idaproject.com>"]
 
 [tool.poetry.dependencies]
 # core

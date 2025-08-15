@@ -17,9 +17,9 @@ def HashedFilenameMetaStorage(storage_class):
             # This class will be the one that uniquifies.
             try:
                 new_kwargs = dict(kwargs, uniquify_names=False)
-                super(HashedFilenameStorage, self).__init__(*args, **new_kwargs)
+                super().__init__(*args, **new_kwargs)
             except (TypeError, ImproperlyConfigured):
-                super(HashedFilenameStorage, self).__init__(*args, **kwargs)
+                super().__init__(*args, **kwargs)
 
         def _get_content_name(self, name, content, chunk_size=None):
             dir_name, file_name = os.path.split(name)
@@ -66,7 +66,7 @@ def HashedFilenameMetaStorage(storage_class):
                 return name
 
             try:
-                return super(HashedFilenameStorage, self)._save(name, content, *args, **kwargs)
+                return super()._save(name, content, *args, **kwargs)
             except OSError as e:
                 if e.errno == EEXIST:
                     # We have a safe storage layer and file exists.
@@ -82,8 +82,7 @@ def HashedFilenameMetaStorage(storage_class):
 # noinspection PyAbstractClass
 # pylint: disable=abstract-method
 class CustomS3Boto3Storage(S3Boto3Storage):
-    """
-    This is our custom version of S3Boto3Storage that fixes a bug in boto3 where the passed in file
+    """This is our custom version of S3Boto3Storage that fixes a bug in boto3 where the passed in file
     is closed upon upload.
 
     https://github.com/boto/boto3/issues/929
@@ -91,9 +90,8 @@ class CustomS3Boto3Storage(S3Boto3Storage):
     """
 
     def _save(self, obj, content):
-        """
-        We create a clone of the content file as when this is passed to boto3 it wrongly closes
-        the file upon upload where as the storage backend expects it to still be open
+        """We create a clone of the content file as when this is passed to boto3 it wrongly closes
+        the file upon upload where as the storage backend expects it to still be open.
         """
         # Seek our content back to the start
         content.seek(0, os.SEEK_SET)
@@ -105,7 +103,7 @@ class CustomS3Boto3Storage(S3Boto3Storage):
         content_autoclose.write(content.read())
 
         # Upload the object which will auto close the content_autoclose instance
-        res = super(CustomS3Boto3Storage, self)._save(obj, content_autoclose)
+        res = super()._save(obj, content_autoclose)
 
         # Cleanup if this is fixed upstream our duplicate should always close
         if not content_autoclose.closed:

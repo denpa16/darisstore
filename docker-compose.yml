@@ -1,4 +1,4 @@
-version: '3.8'
+version: '3.7'
 
 x-app_environment: &app_environment
   environment:
@@ -21,7 +21,7 @@ x-app_environment: &app_environment
     - YND_SECRET_ACCESS_KEY
     - YND_STORAGE_BUCKET_NAME
     - YND_STORAGE_ENDPOINT_URL
-#    - FLOWER_BASIC_AUTH
+    - FLOWER_BASIC_AUTH
     - IMGPROXY_DEVELOPMENT_ERRORS_MODE
     - IMGPROXY_MAX_SRC_RESOLUTION
     - IMGPROXY_ALLOWED_SOURCES
@@ -30,11 +30,13 @@ x-app_environment: &app_environment
     - IMGPROXY_SALT
 
 
+
 services:
   nginx:
     volumes:
       - nginx_cache:/var/lib/nginx/proxy_cache
-      - static:/var/www/static/
+      - static:/var/www/static/:ro
+      - api_cache:/var/lib/nginx/api_cache
     build:
       context: ./nginx
     depends_on:
@@ -44,16 +46,15 @@ services:
       - 443:443
     environment:
       - TLS_MODE
-      - HTPASSWD_NODE
-      - HTPASSWD
+      - HTPASSWD_MODE
       - MONITORING_HTPASSWD
+      - HTPASSWD
+      - IMGPROXY_SITE_HOST
 
   backend:
     build:
       context: ./backend
     <<: *app_environment
-    depends_on:
-      - db
 
   db:
     build:
@@ -65,7 +66,6 @@ services:
       - POSTGRES_PORT
       - POSTGRES_NAME
       - POSTGRES_USER
-      - POSTGRES_HOST
 
   redis:
     image: redis:6.2-alpine
@@ -75,7 +75,7 @@ services:
   celery:
     build:
       context: ./backend
-    command: poetry run celery -A config worker -l info -c 1 -n celery@dats.com --without-gossip --without-mingle -Q celery
+    command: poetry run celery -A config worker -l info -c 1 -n celery@dats.com -Q celery
     depends_on:
       - db
       - redis
@@ -84,24 +84,11 @@ services:
   celery-beat:
     build:
       context: ./backend
-    command: poetry run celery -A config worker -l info -E --without-gossip --without-mingle -Q bg
-    depends_on:
-      - db
-      - redis
-    <<: *app_environment
-
-  celery-important:
-    build:
-      context: ./backend
-    command: poetry run celery -A config worker -l info -E  --without-gossip --without-mingle -Q important
+    command: poetry run celery -A config worker -B
     depends_on:
       - db
       - redis
     <<: *app_environment
 
 volumes:
-  static:
-  redisdata:
-  postgresdata:
-  nginx_cache:
-  nuxt:
+  internal:

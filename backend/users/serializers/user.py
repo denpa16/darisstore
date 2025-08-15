@@ -7,6 +7,8 @@ from users.models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
+    """Сериализатор пользователя."""
+
     class Meta:
         model = User
         exclude = (
@@ -21,6 +23,8 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserEmailLoginSerializer(serializers.Serializer):
+    """Сериализатор для логина по email."""
+
     email = serializers.EmailField(required=True)
     otp = serializers.CharField(label="Временный пароль", required=True)
     uid = serializers.UUIDField(label="ID токена", required=True)
@@ -30,6 +34,8 @@ class UserEmailLoginSerializer(serializers.Serializer):
 
 
 class UserLoginOrRegisterSerializer(serializers.Serializer):
+    """Сериализатор для логина по номеру телефона."""
+
     phone = PhoneNumberField(label="Номер телефона", required=True)
     otp = serializers.CharField(label="Временный пароль", required=True)
     uid = serializers.UUIDField(label="ID токена", required=True)
@@ -39,6 +45,8 @@ class UserLoginOrRegisterSerializer(serializers.Serializer):
 
 
 class ChangeUserSerializer(serializers.ModelSerializer):
+    """Сериализатор для изменения пользователя."""
+
     email = serializers.EmailField(validators=[UniqueValidator(queryset=User.objects.all())])
     phone = PhoneNumberField(label="Номер телефона")
     password = serializers.CharField(required=False, validators=[validate_password])
@@ -68,16 +76,21 @@ class ChangeUserSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, attrs):
+        """Валидация."""
         if attrs.get("password") and not attrs.get("password2"):
             raise serializers.ValidationError({"password2": "Подтвердите пароль"})
 
-        if attrs.get("password") and attrs.get("password2"):
-            if attrs["password"] != attrs["password2"]:
-                raise serializers.ValidationError({"password": "Пароли должны совпадать"})
+        if (
+            attrs.get("password")
+            and attrs.get("password2")
+            and (attrs["password"] != attrs["password2"])
+        ):
+            raise serializers.ValidationError({"password": "Пароли должны совпадать"})
 
         return attrs
 
     def save(self, **kwargs):
+        """Сохранение."""
         password = self.validated_data.get("password")
         if password:
             self.instance.set_password(password)

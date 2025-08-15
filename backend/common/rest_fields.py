@@ -19,7 +19,7 @@ except ImportError:
 
 class MultiImageField(FileField):
     def _generate_insecure_url(self, instance, origin_attr, attr_name, img_format):
-        """Генерация незащищенного URL"""
+        """Генерация незащищенного URL."""
         link = getattr(instance, f"{attr_name}_default")
         try:
             return link + getattr(instance, origin_attr).url + f"@{img_format}"
@@ -27,7 +27,7 @@ class MultiImageField(FileField):
             return None
 
     def _generate_secure_url(self, instance, origin_attr, attr_name, img_format):
-        """Генерация защищенного URL"""
+        """Генерация защищенного URL."""
         # Получаем hex от ключа и соли
         key = bytes.fromhex(IMGPROXY_KEY)
         salt = bytes.fromhex(IMGPROXY_SALT)

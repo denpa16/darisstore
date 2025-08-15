@@ -1,12 +1,15 @@
+from typing import ClassVar
+
+from common.auth import custom_login
 from django.contrib.auth import authenticate, get_user_model, logout
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, BasePermission
+from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.serializers import BaseSerializer
 from rest_framework.viewsets import GenericViewSet
-
-from common.auth import custom_login
 
 from ..serializers import (
     ChangeUserSerializer,
@@ -20,11 +23,12 @@ User = get_user_model()
 
 @extend_schema(tags=["User"])
 class UserViewSet(GenericViewSet):
-    """API для взаимодействия с личным кабинетом"""
 
-    permission_classes = [AllowAny]
+    """API для взаимодействия с личным кабинетом."""
 
-    def get_serializer_class(self):
+    permission_classes: ClassVar[list[type[BasePermission]]] = [AllowAny]
+
+    def get_serializer_class(self) -> type[BaseSerializer]:
         if self.action in ("register_phone", "phone_login"):
             return UserLoginOrRegisterSerializer
         if self.action == "change":
@@ -33,13 +37,13 @@ class UserViewSet(GenericViewSet):
             return UserEmailLoginSerializer
         return UserSerializer
 
-    def list(self, request, *args, **kwargs):
+    def list(self, request: Request) -> Response:
         if not bool(request.user and request.user.is_authenticated):
             return Response({"ok": False, "errors": "not authorized"})
         serializer: UserSerializer = self.get_serializer(instance=request.user)
         return Response(serializer.data)
 
-    def retrieve(self, request, *args, **kwargs):
+    def retrieve(self, request: Request) -> Response:
         if not bool(request.user and request.user.is_authenticated):
             return Response({"ok": False, "errors": "not authorized"})
 
@@ -47,8 +51,8 @@ class UserViewSet(GenericViewSet):
         return Response(serializer.data)
 
     @action(methods=["POST"], detail=False, url_name="register_phone", permission_classes=[])
-    def register_phone(self, request):
-        """Регистрация пользователя после валидации кода"""
+    def register_phone(self, request: Request) -> Response:
+        """Регистрация пользователя после валидации кода."""
         serializer: UserLoginOrRegisterSerializer = self.get_serializer(data=request.data)
         if not serializer.is_valid():
             return Response({"ok": False, "errors": serializer.errors})
@@ -66,8 +70,8 @@ class UserViewSet(GenericViewSet):
         return Response(UserSerializer(instance=user).data)
 
     @action(methods=["POST"], detail=False, url_name="email_login", permission_classes=[])
-    def email_login(self, request):
-        """Авторизация по почте"""
+    def email_login(self, request: Request) -> Response:
+        """Авторизация по почте."""
         serializer: UserEmailLoginSerializer = self.get_serializer(data=request.data)
         if not serializer.is_valid():
             return Response({"ok": False, "errors": serializer.errors})
@@ -84,8 +88,8 @@ class UserViewSet(GenericViewSet):
         )
 
     @action(methods=["POST"], detail=False, url_name="phone_login", permission_classes=[])
-    def phone_login(self, request):
-        """Авторизация по телефону"""
+    def phone_login(self, request: Request) -> Response:
+        """Авторизация по телефону."""
         serializer: UserLoginOrRegisterSerializer = self.get_serializer(data=request.data)
         if not serializer.is_valid():
             return Response({"ok": False, "errors": serializer.errors})
@@ -94,12 +98,12 @@ class UserViewSet(GenericViewSet):
         return Response(status=status.HTTP_200_OK, data=UserSerializer(instance=user).data)
 
     @action(detail=False, methods=["GET"])
-    def logout(self, request):
+    def logout(self, request: Request) -> Response:
         logout(request)
         return Response(status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["PATCH"])
-    def change(self, request):
+    def change(self, request: Request) -> Response:
         if not bool(request.user and request.user.is_authenticated):
             return Response({"ok": False, "errors": "not authorized"})
         user = request.user

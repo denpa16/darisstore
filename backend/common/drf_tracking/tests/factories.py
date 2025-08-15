@@ -11,7 +11,7 @@ class APIRequestLogFactory(factory.django.DjangoModelFactory):
     username_persistent = factory.LazyAttribute(
         lambda log: getattr(log.user, "username", "Anonymous")
         if getattr(log, "user", False)
-        else "Anonymous"
+        else "Anonymous",
     )
     requested_at = factory.fuzzy.FuzzyDateTime(datetime.datetime(2020, 1, 1, tzinfo=datetime.UTC))
     response_ms = factory.Faker("random_int", min=0)

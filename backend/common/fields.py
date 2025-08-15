@@ -4,6 +4,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 from django.db.models.fields.files import ImageFieldFile
 from django.forms import SelectMultiple
+from django.contrib.admin.widgets import FilteredSelectMultiple
 
 from .form_fields import (
     FloatRangeFormField,
@@ -50,7 +51,9 @@ class PolygonField(models.Field):
             try:
                 if not isinstance(field_image, ImageFieldFile):
                     field_image = ImageFieldFile(
-                        field_image.instance, field_image.field, field_image.name
+                        field_image.instance,
+                        field_image.field,
+                        field_image.name,
                     )
                 width = field_image.width
                 height = field_image.height
@@ -106,10 +109,7 @@ class PpoiField(models.Field):
 
     def value_from_object(self, obj):
         field_image = rgetattr(obj, self.source)
-        if field_image:
-            field_image = field_image.url
-        else:
-            field_image = None
+        field_image = field_image.url if field_image else None
         return getattr(obj, self.attname), field_image
 
     def value_to_string(self, obj):
@@ -127,7 +127,10 @@ class ChoiceArrayField(ArrayField):
             "form_class": forms.TypedMultipleChoiceField,
             "choices": self.base_field.choices,
             "coerce": self.base_field.to_python,
-            "widget": ArraySelectMultiple,
+            "widget": FilteredSelectMultiple(
+                verbose_name=self.base_field.verbose_name,
+                is_stacked=False,
+            ),
         }
         defaults.update(kwargs)
         return super(ArrayField, self).formfield(**defaults)

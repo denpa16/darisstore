@@ -13,50 +13,54 @@ class PrefetchUserManager(models.Manager):
 
 
 class APIRequestLog(models.Model):
-    """
-    Логирует зопросы к Django REST Framework API
-    """
+    """Логирует зопросы к Django REST Framework API."""
 
     objects = PrefetchUserManager()
 
     user = models.ForeignKey(
-        verbose_name="Пользователь", to=User, on_delete=models.SET_NULL, null=True, blank=True
+        verbose_name="Пользователь",
+        to=User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
     )
     username_persistent = models.CharField(
-        "Имя пользователя",
+        verbose_name="Имя пользователя",
         max_length=getattr(settings, "DRF_TRACKING_USERNAME_LENGTH", 200),
         null=True,
         blank=True,
         help_text="Поле сохраняется даже если объект пользователя удален",
         db_index=True,
     )
-    requested_at = models.DateTimeField("Дата и время запроса", db_index=True)
-    response_ms = models.PositiveIntegerField("Время выполнения кода представления, мс", default=0)
+    requested_at = models.DateTimeField(verbose_name="Дата и время запроса", db_index=True)
+    response_ms = models.PositiveIntegerField(verbose_name="Время выполнения кода представления, мс", default=0)
     path = models.CharField(
-        "URL запроса", max_length=getattr(settings, "DRF_TRACKING_PATH_LENGTH", 200), db_index=True
+        verbose_name="URL запроса",
+        max_length=getattr(settings, "DRF_TRACKING_PATH_LENGTH", 200),
+        db_index=True,
     )
     view = models.CharField(
-        "View запроса",
+        verbose_name="View запроса",
         max_length=getattr(settings, "DRF_TRACKING_VIEW_LENGTH", 200),
         null=True,
         blank=True,
         db_index=True,
     )
     view_method = models.CharField(
-        "View-метод запроса",
+        verbose_name="View-метод запроса",
         max_length=getattr(settings, "DRF_TRACKING_VIEW_METHOD_LENGTH", 200),
         null=True,
         blank=True,
         db_index=True,
     )
-    remote_addr = models.GenericIPAddressField("IP-адрес источника запроса", db_index=True)
-    host = models.URLField("Хост", db_index=True)
-    method = models.CharField("Метод запроса", max_length=10, db_index=True)
-    query_params = models.TextField("Параметры запроса", null=True, blank=True)
-    data = models.TextField("Данные", null=True, blank=True)
-    response = models.TextField("Ответ", null=True, blank=True)
-    errors = models.TextField("Ошибки", null=True, blank=True)
-    status_code = models.PositiveIntegerField("Статус ответа", null=True, blank=True, db_index=True)
+    remote_addr = models.GenericIPAddressField(verbose_name="IP-адрес источника запроса", db_index=True)
+    host = models.URLField(verbose_name="Хост", db_index=True)
+    method = models.CharField(verbose_name="Метод запроса", max_length=10, db_index=True)
+    query_params = models.TextField(verbose_name="Параметры запроса", null=True, blank=True)
+    data = models.TextField(verbose_name="Данные", null=True, blank=True)
+    response = models.TextField(verbose_name="Ответ", null=True, blank=True)
+    errors = models.TextField(verbose_name="Ошибки", null=True, blank=True)
+    status_code = models.PositiveIntegerField(verbose_name="Статус ответа", null=True, blank=True, db_index=True)
 
     class Meta:
         verbose_name = "Лог запроса к DRF API"
@@ -125,4 +129,4 @@ class APIRequestLog(models.Model):
         )
 
     def __str__(self):
-        return "{} {}".format(self.method, self.path)
+        return f"{self.method} {self.path}"

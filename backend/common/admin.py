@@ -5,7 +5,6 @@ from django_admin_listfilter_dropdown.filters import SimpleDropdownFilter
 
 
 class ChaindedRelatedDropdownFilter(SimpleDropdownFilter):
-
     lookup = None
     parent_parameters = None
     child_parameters = None
@@ -48,14 +47,15 @@ class ChaindedRelatedDropdownFilter(SimpleDropdownFilter):
             yield {
                 "selected": self.value() == str(lookup),
                 "query_string": changelist.get_query_string(
-                    {self.parameter_name: lookup}, self.child_parameters
+                    {self.parameter_name: lookup},
+                    self.child_parameters,
                 ),
                 "display": title,
             }
 
 
 class ChainedListFilter(SimpleListFilter):
-    """Фильтр чьи варианты значений фильтруются на основе другого фильтра"""
+    """Фильтр чьи варианты значений фильтруются на основе другого фильтра."""
 
     lookup = None
     parent_parameters = None
@@ -99,7 +99,8 @@ class ChainedListFilter(SimpleListFilter):
             yield {
                 "selected": self.value() == str(lookup),
                 "query_string": changelist.get_query_string(
-                    {self.parameter_name: lookup}, self.child_parameters
+                    {self.parameter_name: lookup},
+                    self.child_parameters,
                 ),
                 "display": title,
             }
@@ -118,7 +119,8 @@ class DeclaredFirstAdminMixin:
 class WrapRelatedAdminMixin:
     def _wrap_related_field(self, name, field, model, request):
         """Оборачивает виджет внешнего ключа в RelatedFieldWidgetWrapper чтобы у него появились
-        кнопки с действиями: добавить, изменить, удалить"""
+        кнопки с действиями: добавить, изменить, удалить.
+        """
         if isinstance(field.widget, RelatedFieldWidgetWrapper):
             return
         rel = model._meta.get_field(name).remote_field
@@ -136,7 +138,7 @@ class WrapRelatedAdminMixin:
         )
 
     def get_form(self, request, obj=None, change=False, **kwargs):
-        """Добавляем в форму CRUD кнопки для полей выбора внешних ключей"""
+        """Добавляем в форму CRUD кнопки для полей выбора внешних ключей."""
         form = super().get_form(request, obj=obj, change=change, **kwargs)
         model_field_names = [field.name for field in self.model._meta.fields]
         for field_name, field in form.base_fields.items():

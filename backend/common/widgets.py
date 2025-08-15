@@ -14,8 +14,7 @@ class PpoiWidget(MultiWidget):
         return value
 
     def get_context(self, name, value, attrs):
-        context = super().get_context(name, value, attrs)
-        return context
+        return super().get_context(name, value, attrs)
 
     class Media:
         css = {"screen": ("common/css/ppoi-widget.css",)}

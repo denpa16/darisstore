@@ -5,11 +5,28 @@ services:
     restart: always
     build:
       context: ./frontend
-    command: node .output/server/index.mjs
+      args:
+        - PACKAGES_IMAGE=${NPM_PACKAGES}
+        - UI_DEMO=${UI_DEMO}
+        - SERVER_API_URL=${SERVER_API_URL}
+        - IMGPROXY_SITE_HOST=${IMGPROXY_SITE_HOST}
+        - REDIS_DSN=${REDIS_DSN}
+        - SENTRY_DSN_FRONTEND=${SENTRY_DSN_FRONTEND}
+        - SENTRY_ENVIRONMENT=${CI_COMMIT_REF_SLUG:-production}
+        - SENTRY_RELEASE=${CI_PIPELINE_ID}
+        - YND_CAPTCHA_CLIENT_KEY=${YND_CAPTCHA_CLIENT_KEY}
+    command: npm run start
+    entrypoint: ./entrypoint.production.sh
     environment:
       - IMGPROXY_SITE_HOST
+      - UI_DEMO
       - SERVER_API_URL
-    ports:
-      - "3000:3000"
+      - REDIS_DSN
+      - SENTRY_DSN_FRONTEND
+      - SENTRY_ENVIRONMENT=${CI_COMMIT_REF_SLUG:-production}
+      - SENTRY_RELEASE=${CI_PIPELINE_ID}
+      - YND_CAPTCHA_CLIENT_KEY=${YND_CAPTCHA_CLIENT_KEY}
+    depends_on:
+      - backend
     volumes:
       - nuxt:/app/nuxt_volume:delegated

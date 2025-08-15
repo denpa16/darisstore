@@ -1,6 +1,7 @@
 resolver 127.0.0.11 valid=5s ipv6=off;
 
 proxy_cache_path /var/lib/nginx/proxy_cache levels=1:2 keys_zone=CACHE:15m max_size=1G;
+proxy_cache_path /var/lib/nginx/api_cache levels=1:2 keys_zone=API_CACHE:15m max_size=5g inactive=60m use_temp_path=off;
 
 map $server_port $x_forwarded_host {
     default $host:$server_port;
@@ -14,13 +15,15 @@ map $server_port $x_forwarded_host {
 <% fi; -%>
 
 
-# Main Site
-
 <% if [ "$TLS_MODE" != "off" ]; then -%>
     server {
         server_name <%= $SITE_HOST %>;
 
         listen 80;
+
+        location /.well-known/acme-challenge/ {
+            root /var/www/local_static/;
+        }
 
         return 301 https://$host$request_uri;
     }
@@ -65,13 +68,22 @@ server {
         }
     <% else -%>
         location /s/ {
-            include backend;
+            alias /var/www/static/;
+            expires 365d;
         }
     <% fi; -%>
 
 
     location /api/ {
         include backend;
+        proxy_cache API_CACHE;
+        proxy_cache_methods GET;
+        proxy_cache_key "$request_uri|$request_method";
+        proxy_cache_valid 200 15m;
+        proxy_cache_valid 404 1m;
+        proxy_cache_use_stale error timeout updating http_500 http_502 http_503 http_504;
+        add_header X-Cache-Status $upstream_cache_status;
+
     }
 
     location /admin/ {
@@ -79,36 +91,43 @@ server {
         include backend;
     }
 
-    location /flower/ {
-        set $flower http://flower:5555;
-        proxy_pass $flower;
-        proxy_set_header Host $host;
-        proxy_redirect off;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-    }
-
+    #location /crm/ {
+    #    client_max_body_size 250M;
+    #    include backend;
+    #}
 
     location /robots.txt {
         include backend;
     }
 
-    location ~ ^/storage/(?<storageUrl>(.*))$ {
-        proxy_pass "https://storage.yandexcloud.net/neometry-media/media/$storageUrl";
+    location /yandex_e8c6b34850679ee0.html {
+        root /var/www/local_static/;
+    }
+
+    location ~ ^/pdf/(.*)$ {
+        proxy_pass "http://pdf.idacloud.ru/pdf/$scheme://$host/$1?$args";
     }
 
     location /.well-known/acme-challenge/ {
         root /var/www/local_static/;
     }
 
-        <% if [ "$ENVIRONMENT" = "production" ]; then -%>
+    location /sitemap.xml {
+        include backend;
+    }
+
+    <% if [ "$ENVIRONMENT" = "production" ]; then -%>
 	    location @frontend {
             include frontend;
 	    }
 
+	    location /images/ {
+            root /var/www/local_static/;
+            try_files $uri @frontend;
+        }
+
 	    location / {
-            <% if [ "$HTPASSWD_NODE" != "off" ]; then -%>
+            <% if [ "$HTPASSWD_MODE" != "off" ]; then -%>
             auth_basic "Restricted Content";
             auth_basic_user_file /etc/nginx/.htpasswd;
             <% fi; -%>
@@ -117,4 +136,67 @@ server {
 	    }
     <% fi; -%>
 
+    # Если вам нужно развернуть доступ к Imageproxy на текущем домене, то раскоментируйте эти строки
+    location ~ ^/proxy/(.*)$ {
+        add_header X-Cache-Status $upstream_cache_status;
+        expires 3y;
+
+        proxy_cache CACHE;
+        proxy_cache_valid      200  30d;
+        proxy_cache_use_stale  error timeout invalid_header updating http_500 http_502 http_503 http_504;
+        proxy_cache_background_update on;
+        proxy_cache_lock on;
+        proxy_cache_lock_age 30s;
+        proxy_cache_lock_timeout 30s;
+        proxy_cache_key $scheme://$host$uri;
+
+        set $img_upstream http://imgproxy:8080;
+
+        if ($is_args = "?") {
+            set $arg %3F;
+            proxy_pass $img_upstream/$1$arg$args;
+        }
+        proxy_pass $img_upstream/$1$is_args$args;
+    }
+
 }
+
+# Если вам нужно развернуть доступ к Imageproxy на отдельном домене, то раскоментируйте эти строки
+#server {
+#    server_name <%= $IMGPROXY_SITE_HOST %>;
+#
+#    sendfile on;
+#    tcp_nodelay on;
+#    tcp_nopush on;
+#    gzip on;
+#    gzip_disable "msie6";
+#    gzip_min_length 1000;
+#    gzip_types text/plain text/css application/json application/x-javascript text/xml application/xml application/xml+rss text/javascript application/javascript;
+#    http2_push_preload on;
+#    client_max_body_size 5M;
+#
+#    <% if [ "$TLS_MODE" != "off" ]; then -%>
+#        listen 443 ssl http2;
+#        include ssl_params;
+#    <% else -%>
+#        listen 80;
+#    <% fi -%>
+#
+#    location ~ ^/(.*)$ { {
+#
+#        add_header X-Cache-Status $upstream_cache_status;
+#        expires 3y;
+#
+#        proxy_cache CACHE;
+#        proxy_cache_valid      200  1d;
+#        proxy_cache_use_stale  error timeout invalid_header updating http_500 http_502 http_503 http_504;
+#
+#        proxy_cache_background_update on;
+#
+#        proxy_cache_lock on;
+#
+#        set $img_upstream http://imgeproxy:8080;
+#        proxy_pass $img_upstream/$1$is_args$args;
+#    }
+#
+#}

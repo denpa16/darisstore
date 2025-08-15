@@ -1,4 +1,5 @@
 import ast
+import contextlib
 import ipaddress
 import logging
 import traceback
@@ -11,10 +12,8 @@ from .models import APIRequestLog
 logger = logging.getLogger(__name__)
 
 
-class BaseLoggingMixin(object):
-    """
-    Миксин для логирования запросов
-    """
+class BaseLoggingMixin:
+    """Миксин для логирования запросов."""
 
     CLEANED_SUBSTITUTE = "********************"
 
@@ -23,12 +22,12 @@ class BaseLoggingMixin(object):
 
     def __init__(self, *args, **kwargs):
         assert isinstance(self.CLEANED_SUBSTITUTE, str), "CLEANED_SUBSTITUTE должен быть строкой."
-        super(BaseLoggingMixin, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def initial(self, request, *args, **kwargs):
         self.log = {"requested_at": now(), "data": self._clean_data(request.body)}
 
-        super(BaseLoggingMixin, self).initial(request, *args, **kwargs)
+        super().initial(request, *args, **kwargs)
 
         try:
             # Accessing request.data *for the first time* parses the request body, which may raise
@@ -41,13 +40,16 @@ class BaseLoggingMixin(object):
         self.log["data"] = self._clean_data(data)
 
     def handle_exception(self, exc):
-        response = super(BaseLoggingMixin, self).handle_exception(exc)
+        response = super().handle_exception(exc)
         self.log["errors"] = traceback.format_exc()
         return response
 
     def finalize_response(self, request, response, *args, **kwargs):
-        response = super(BaseLoggingMixin, self).finalize_response(
-            request, response, *args, **kwargs
+        response = super().finalize_response(
+            request,
+            response,
+            *args,
+            **kwargs,
         )
 
         if self.should_log(request, response):
@@ -83,7 +85,7 @@ class BaseLoggingMixin(object):
                     "response_ms": self._get_response_ms(),
                     "response": self._clean_data(rendered_content),
                     "status_code": response.status_code,
-                }
+                },
             )
             if self._clean_data(request.query_params.dict()) == {}:
                 self.log.update({"query_params": self.log["data"]})
@@ -96,13 +98,11 @@ class BaseLoggingMixin(object):
         return response
 
     def handle_log(self):
-        """
-        Хук для действия с логируемыми данными.
-        """
+        """Хук для действия с логируемыми данными."""
         raise NotImplementedError
 
     def _get_path(self, request):
-        """Возвращает path запроса"""
+        """Возвращает path запроса."""
         return request.path
 
     def _get_ip_address(self, request):
@@ -153,8 +153,7 @@ class BaseLoggingMixin(object):
         return user
 
     def _get_response_ms(self):
-        """
-        Возвращает длительность обработки запроса в миллисекундах.
+        """Возвращает длительность обработки запроса в миллисекундах.
         В случае отрицательного значения возвращает 0.
         """
         response_timedelta = now() - self.log["requested_at"]
@@ -162,21 +161,19 @@ class BaseLoggingMixin(object):
         return max(response_ms, 0)
 
     def should_log(self, request, response):
-        """
-        Метод возвращает True если запрос должен быть залогирован.
+        """Метод возвращает True если запрос должен быть залогирован.
 
         По умолчанию логирует все методы запроса в logging_methods.
         """
         return self.logging_methods == "__all__" or request.method in self.logging_methods
 
     def _clean_data(self, data):
-        """
-        Чистит словарь данных от потенциально конфиденциальной информации до отправки в базу.
+        """Чистит словарь данных от потенциально конфиденциальной информации до отправки в базу.
         Функция основывается на "_clean_credentials"
         (https://github.com/django/django/blob/stable/1.11.x/django/contrib/auth/__init__.py#L50)
         Поля, определенные django, по умолчанию очищаются с помощью этой функции.
         Вы можете определить свои собственные чувствительные поля в своем view, определив set.
-        например: sensitive_fields = {'field1', 'field2'}
+        например: sensitive_fields = {'field1', 'field2'}.
         """
         if isinstance(data, bytes):
             data = data.decode(errors="replace")
@@ -194,11 +191,9 @@ class BaseLoggingMixin(object):
                 }
 
             for key, value in data.items():
-                try:
+                with contextlib.suppress(ValueError, SyntaxError):
                     value = ast.literal_eval(value)
-                except (ValueError, SyntaxError):
-                    pass
-                if isinstance(value, (list, dict)):
+                if isinstance(value, list | dict):
                     data[key] = self._clean_data(value)
                 if key.lower() in SENSITIVE_FIELDS:
                     data[key] = self.CLEANED_SUBSTITUTE
@@ -207,16 +202,14 @@ class BaseLoggingMixin(object):
 
 class LoggingMixin(BaseLoggingMixin):
     def handle_log(self):
-        """
-        Хук для действия с логируемыми данными.
+        """Хук для действия с логируемыми данными.
         По умолчанию сохраняет объект лога в базу данных.
         """
         APIRequestLog(**self.log).save()
 
 
 class LoggingErrorsMixin(LoggingMixin):
-    """
-    Метод возвращает True если запрос должен быть залогирован.
+    """Метод возвращает True если запрос должен быть залогирован.
 
     Логирует только ошибки.
     """

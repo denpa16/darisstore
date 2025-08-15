@@ -1,7 +1,7 @@
 from PIL import ImageFilter
 
 
-class Blur(object):
+class Blur:
     def __init__(self, radius):
         self.radius = radius
 

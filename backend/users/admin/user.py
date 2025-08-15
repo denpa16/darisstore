@@ -1,16 +1,16 @@
 from django.contrib.admin import register
 from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 
-from ..models import User
-from ..forms import ChangeForm, CreationForm
+from users.models import User
 
 
 @register(User)
 class UserAdmin(UserAdmin):
-    """Пользователь"""
+    """Пользователь."""
 
-    form = ChangeForm
-    add_form = CreationForm
+    form = UserChangeForm
+    add_form = UserCreationForm
     list_display = (
         "id",
         "email",
@@ -36,7 +36,7 @@ class UserAdmin(UserAdmin):
                     "resident",
                     "passport_number",
                     "passport_serial",
-                )
+                ),
             },
         ),
         (
@@ -63,7 +63,7 @@ class UserAdmin(UserAdmin):
                     "resident",
                     "passport_number",
                     "passport_serial",
-                )
+                ),
             },
         ),
         (
