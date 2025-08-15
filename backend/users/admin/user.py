@@ -1,13 +1,13 @@
 from django.contrib.admin import register
 from django.contrib.auth.admin import UserAdmin
 
-from users.forms import ChangeForm, CreationForm
-from users.models import User
+from ..models import User
+from ..forms import ChangeForm, CreationForm
 
 
 @register(User)
 class UserAdmin(UserAdmin):
-    """Пользователь."""
+    """Пользователь"""
 
     form = ChangeForm
     add_form = CreationForm
@@ -36,7 +36,7 @@ class UserAdmin(UserAdmin):
                     "resident",
                     "passport_number",
                     "passport_serial",
-                ),
+                )
             },
         ),
         (
@@ -63,7 +63,7 @@ class UserAdmin(UserAdmin):
                     "resident",
                     "passport_number",
                     "passport_serial",
-                ),
+                )
             },
         ),
         (

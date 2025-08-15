@@ -1,1 +1,1 @@
-from .smsr import SMSCSMS
+from .smsr import SMSRSMS

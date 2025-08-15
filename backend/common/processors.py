@@ -1,13 +1,9 @@
 from PIL import ImageFilter
 
 
-class Blur:
-    """Блюр."""
-
-    def __init__(self, radius) -> None:
-        """Инициализация."""
+class Blur(object):
+    def __init__(self, radius):
         self.radius = radius
 
-    def process(self, img) -> None:
-        """Процессинг."""
+    def process(self, img):
         return img.filter(ImageFilter.GaussianBlur(radius=self.radius))

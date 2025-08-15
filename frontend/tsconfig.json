@@ -1,20 +1,4 @@
 {
-    "extends": "./.nuxt/tsconfig.json",
-    "compilerOptions": {
-        "moduleResolution": "Bundler",
-        "allowImportingTsExtensions": true,
-        "paths": {
-            "@/*": [
-                "./*"
-            ],
-            "~/*": [
-                "./*"
-            ]
-        },
-        "skipLibCheck": true,
-        "typeRoots": [
-            "./node_modules/@types",
-            "./node_modules/@yandex/ymaps3-types"
-        ]
-    }
+  // https://nuxt.com/docs/guide/concepts/typescript
+  "extends": "./.nuxt/tsconfig.json"
 }

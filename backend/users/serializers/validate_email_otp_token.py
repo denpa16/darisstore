@@ -3,43 +3,33 @@ import datetime
 from django.utils import timezone
 from rest_framework import serializers
 
-from users.constants import OTP_TOKEN_VALIDATION_TIME, TOKEN_EXPIRED, TOKEN_INVALID
-from users.models import EmailOTPToken
+from ..constants import OTP_TOKEN_VALIDATION_TIME
+from ..models import EmailOTPToken
 
 
 class ValidateEmailOTPToken(serializers.ModelSerializer):
-    """Сериализатор для валидации токена для email."""
+    """Сериализатор для валидации токена для email"""
 
     class Meta:
         model = EmailOTPToken
         fields = ("email", "uid", "otp")
 
     def validate(self, attrs):
-        """Валидация."""
         super().validate(attrs)
         email = attrs["email"]
         otp = attrs["otp"]
         uid = attrs["uid"]
         created_diff = timezone.now() - datetime.timedelta(minutes=OTP_TOKEN_VALIDATION_TIME)
         tokens = EmailOTPToken.objects.filter(
-            email=email,
-            otp=otp,
-            uid=uid,
-            used=False,
-            created__gte=created_diff,
+            email=email, otp=otp, uid=uid, used=False, created__gte=created_diff
         )
         if tokens.exists():
             EmailOTPToken.objects.filter(email=email, otp=otp).update(used=True)
             EmailOTPToken.objects.filter(email=email, used=False).delete()
             return attrs
         expired_tokens = EmailOTPToken.objects.filter(
-            email=email,
-            otp=otp,
-            used=False,
-            created__lt=created_diff,
+            email=email, otp=otp, used=False, created__lt=created_diff
         )
         if expired_tokens:
-            msg = TOKEN_EXPIRED
-            raise serializers.ValidationError(msg)
-        msg = TOKEN_INVALID
-        raise serializers.ValidationError(msg)
+            raise serializers.ValidationError("Ваш код авторизации истек")
+        raise serializers.ValidationError("Неправильный код авторизации")

@@ -1,48 +1,32 @@
-from typing import NamedTuple
 from urllib import request
 
 import requests
-import sentry_sdk
 from celery import shared_task
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.base import ContentFile
-from rest_framework import status
 
-from .integrations import SMSCSMS
-from .yandex_captcha import YandexCaptcha
-
-
-class ContentTypeTuple(NamedTuple):
-    """Именнованный кортеж для использования ContentType."""
-
-    app: str
-    model: str
-    id: str
+from .integrations import SMSRSMS
 
 
 @shared_task
-def save_remote_image(app_label: str, model: str, pk: str | int, attr_name: str, url: str) -> None:
-    """Скачивание изображения из внешнего источника."""
+def save_remote_image(app_label, model, pk, attr_name, url):
     ct = ContentType.objects.get_by_natural_key(app_label, model)
     obj = ct.get_object_for_this_type(pk=pk)
     if not url:
-        msg = "url is empty"
-        raise ValueError(msg)
+        raise ValueError("url is empty")
     if not hasattr(obj, attr_name):
-        msg = f"{obj} has no attribute {attr_name}"
-        raise AttributeError(msg)
+        raise AttributeError(f"{obj} has no attribute {attr_name}")
     attr = getattr(obj, attr_name)
     try:
-        response = requests.get(url, timeout=3)
-    except requests.RequestException:
+        response = requests.get(url)
+    except:
         try:
-            response = requests.get(url, timeout=3)
-        except requests.RequestException as e:
-            sentry_sdk.capture_message(f"Error {e} {url}")
+            response = requests.get(url, verify=False)
+        except Exception as e:
+            print(f"Error {e} {url}")
             return
-
-    if int(response.status_code) != status.HTTP_200_OK:
-        sentry_sdk.capture_message(f"Error status code {response.status_code} {url}")
+    if not response.status_code == 200:
+        print(f"Error status code {response.status_code} {url}")
         return
     image = ContentFile(response.content)
     filename = request.urlparse(url).path.split("/")[-1]
@@ -50,21 +34,15 @@ def save_remote_image(app_label: str, model: str, pk: str | int, attr_name: str,
 
 
 @shared_task
-def convert_to_png(ctt: ContentTypeTuple, to_attr: str, url: str, width: int, height: str) -> None:
-    """Конвертирование изображения в png."""
-    ct = ContentType.objects.get_by_natural_key(ctt[0], ctt[1])
-    obj = ct.get_object_for_this_type(pk=ctt[2])
+def convert_to_png(app_label, model, pk, to_attr, url, width, height) -> None:
+    ct = ContentType.objects.get_by_natural_key(app_label, model)
+    obj = ct.get_object_for_this_type(pk=pk)
     if not url:
-        msg = "url is empty"
-        raise ValueError(msg)
+        raise ValueError("url is empty")
     if not hasattr(obj, to_attr):
-        msg = f"{obj} has no attribute {to_attr}"
-        raise AttributeError(msg)
+        raise AttributeError(f"{obj} has no attribute {to_attr}")
     attr = getattr(obj, to_attr)
-    g = requests.get(
-        f"http://imgproxy:8080/signature:insecure/resize:fit:{width}:{height}:0/gravity:sm/plain/{url}@png",
-        timeout=10,
-    )
+    g = requests.get(f"http://imgproxy:8080/insecure/fit/{width}/{height}/sm/0/plain/{url}@png")
     g.raise_for_status()
     image = ContentFile(g.content)
     filename = f"{obj.id}_plan_png.png"
@@ -72,13 +50,6 @@ def convert_to_png(ctt: ContentTypeTuple, to_attr: str, url: str, width: int, he
 
 
 @shared_task
-def send_sms(to: str, body: str) -> str:
-    """Отправка SMS кода."""
-    message = SMSCSMS(to=to, body=body)
+def send_sms(to, body):
+    message = SMSRSMS(to=to, body=body)
     message.send()
-
-
-@shared_task
-def task_reset_yandex_captcha_counter() -> None:
-    """Сброс количества yandex captcha."""
-    YandexCaptcha().reset_yandex_captcha_counter()

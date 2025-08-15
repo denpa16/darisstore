@@ -1,9 +1,0 @@
-version: '3.8'
-
-services:
-  backend:
-    image: registry.gitlab.idacloud.ru/idaproject/internal/template_project/backend
-    build:
-      context: ./backend
-    volumes:
-      - ./backend/:/app/:cached

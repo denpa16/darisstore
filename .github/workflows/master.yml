@@ -30,6 +30,6 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
       - name: deploy
-        run: docker compose -f docker-compose.yml -f docker-compose.${{ github.ref_name }}.yml -f docker-compose.frontend.yml up --build --remove-orphans -d
+        run: docker compose -f docker-compose.yml -f docker-compose.production.yml -f docker-compose.frontend.yml up --build --remove-orphans -d
         env:
           BRANCH_NAME: ${{ github.ref_name }}

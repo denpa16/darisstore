@@ -3,12 +3,12 @@ name = "Template project"
 version = "0.1.0"
 description = "template project"
 license = "MIT"
-authors=["Egor Ponyavin <ep@idaproject.com>"]
+authors=["Denis Pavlov <den.pavlov.1998@list.ru>"]
 
 [tool.poetry.dependencies]
 # core
 python = "3.12.*"
-Django = "5.1.*"
+Django = "5.0.*"
 psycopg2-binary = "2.9.*"
 sentry-sdk = "1.39.*"
 requests = "2.31.*"
@@ -27,8 +27,12 @@ phonenumbers = "^8.12.29"
 django-phonenumber-field = "5.2.*"
 django-admin-list-filter-dropdown = "~1.0.3"
 
+#Bot
+g4f = {extras = ["all"], version = "0.3.2.8"}
+python-telegram-bot = {extras = ["ext"], version = "21.5.*"}
+
 # Rest
-djangorestframework = "3.15.*"
+djangorestframework = "3.14.*"
 django-filter = "22.*"
 drf-spectacular = "0.24.*"
 
@@ -41,19 +45,15 @@ pytest-django = "^4.4.0"
 pytest-sugar = "^0.9.4"
 
 # Celery
-celery = "5.4.0"
+celery = "^5.1.2"
 django-celery-email = "~3.0.0"
 
 # Others
 Pillow = "10.0.1"
 django-robots = "5.0.*"
-jsonschema = "^4.21.1"
-django-jsonform = "^2.22.0"
-json-log-formatter = "^1.0"
-pytz = "^2024.2"
 
 [tool.poetry.dev-dependencies]
-django-debug-toolbar = "4.4.*"
+django-debug-toolbar = "^3.2.1"
 
 # linting
 ruff = "0.0.*"
@@ -72,49 +72,30 @@ build-backend = "poetry.core.masonry.api"
 select = ["ALL"]
 ignore = [
     "ANN101",
-    "A003",
-    "RUF001",
-    "D100",
-    "RUF002",
-    "ANN001",
-    "ANN201",
-    "RUF012",
-    "D106",
-    "ARG002",
-    "ANN003",
-    "ANN002",
-    "D105",
-    "EXE002",
-    "A001",
+    "ANN401",
     "ARG001",
-    "BLE001",
-    "PTH123",
-    "PTH118",
-    "C901",
-    "PLR0912",
-    "PLR0913",
+    "ARG002",
+    "TID252",
+    "RUF001",
+    "RUF002",
     "FBT001",
     "FBT002",
-    "SLF001",
-    "RUF003",
-    "B023",
+    "PTH118",
     "PTH122",
-    "S113",
-    "S324",
-    "S104",
-    "FLY002",
-    "PLR0915",
-    "S106",
-    "S105",
-    "B018",
-    "N806",
-    "S314",
-    "N817",
-    "PTH110",
-    "PTH103",
-    "PTH109",
-    "SIM103",
-    "PT001",
+    "S101",
+    "A001",
+    "A003",
+    "D100",
+    "D101",
+    "D102",
+    "D103",
+    "D105",
+    "D106",
+    "D211",
+    "D213",
+    "D404",
+    "EXE002",
+    "COM812",
 ]
 src = ["."]
 ignore-init-module-imports = true
@@ -147,7 +128,7 @@ exclude = [
     "__init__.py",
     "apps.py",
     "**/tests/**",
-    "manage.py",
+    "**/common/**"
 ]
 
 # Same as Black.

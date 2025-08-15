@@ -1,22 +1,17 @@
-"""Settings."""
-
-import sys
 from os import environ, getenv
+from os.path import join
 from pathlib import Path
 from sys import argv
 
 from django.utils.translation import gettext_lazy as _
-
-from common.json_celery_logging.formatter import CustomJSONFormatter
 
 SITE_HOST = getenv("SITE_HOST")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = getenv("SECRET_KEY")
 
-TESTING = "test" in argv or any("pytest" in a for a in argv)
+TESTING = "test" in argv or any(["pytest" in a for a in argv])
 DEBUG = getenv("DEBUG", "True") == "True" and not TESTING
-API_DOCS_ENABLE = getenv("API_DOCS_ENABLE", "False") == "True"
 
 ALLOWED_HOSTS = ["*"]
 CSRF_TRUSTED_ORIGINS = [f"https://{SITE_HOST}"]
@@ -46,11 +41,11 @@ INSTALLED_APPS = [
     "rest_framework",
     "location_field.apps.DefaultConfig",
     "djcelery_email",
-    "django_jsonform",
-    # apps
-    "common.apps.CommonConfig",
-    "sitemap.apps.SitemapConfig",
+    # main apps
     "users.apps.UserConfig",
+    "common.apps.CommonConfig",
+    "common.drf_tracking.apps.RestFrameworkTrackingConfig",
+    # apps
 ]
 
 MIDDLEWARE = [
@@ -62,14 +57,12 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django_user_agents.middleware.UserAgentMiddleware",
-    "common.middleware.GetIPMiddleware",
 ]
 if DEBUG:
     INSTALLED_APPS.append("debug_toolbar")
     MIDDLEWARE.append("debug_toolbar.middleware.DebugToolbarMiddleware")
 
-    def show_toolbar_callback(_: None) -> bool:
-        """Показ дебаг панели."""
+    def show_toolbar_callback(_):
         return DEBUG
 
     DEBUG_TOOLBAR_CONFIG = {"SHOW_TOOLBAR_CALLBACK": "config.settings.show_toolbar_callback"}
@@ -103,10 +96,10 @@ DATABASES = {
         "NAME": getenv("POSTGRES_NAME"),
         "USER": getenv("POSTGRES_USER"),
         "PASSWORD": getenv("POSTGRES_PASSWORD"),
-        "HOST": getenv("POSTGRES_HOST", "db"),
+        "HOST": "db",
         "PORT": getenv("POSTGRES_PORT"),
         "CONN_MAX_AGE": 600,
-    },
+    }
 }
 
 # Password validation
@@ -141,16 +134,20 @@ LANGUAGES = (("ru", _("Russian")), ("en", _("English")))
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = "/s/"
-STATIC_ROOT = Path(BASE_DIR) / "static"
+STATIC_ROOT = join(BASE_DIR, "static")
 
 # Media
 MEDIA_URL = "/m/"
-MEDIA_ROOT = Path(BASE_DIR) / "media"
+MEDIA_ROOT = join(BASE_DIR, "media")
+if TESTING:
+    DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
+    BASE_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
+else:
+    DEFAULT_FILE_STORAGE = "common.storages.HashedFilenameS3Boto3Storage"
+    BASE_FILE_STORAGE = "common.storages.CustomS3Boto3Storage"
 
 FILE_UPLOAD_DIRECTORY_PERMISSIONS = 0o755
 FILE_UPLOAD_PERMISSIONS = 0o644
-DATA_UPLOAD_MAX_NUMBER_FILES = 50000
-DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
@@ -214,42 +211,17 @@ CKEDITOR_CONFIGS = {
         ],
         "toolbar": "Custom",
         "extraPlugins": ["liststyle"],
-    },
+    }
 }
 
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    # "DEFAULT_RENDERER_CLASSES": ["drf_orjson_renderer.renderers.ORJSONRenderer"],
     "DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.DjangoFilterBackend",),
     "DEFAULT_AUTHENTICATION_CLASSES": ["rest_framework.authentication.SessionAuthentication"],
-    "EXCEPTION_HANDLER": "common.exception_handler.exception_handler",
 }
-if not DEBUG or not API_DOCS_ENABLE:
+if not DEBUG:
     REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = ["rest_framework.renderers.JSONRenderer"]
-
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "formatters": {
-        "json": {
-            "()": CustomJSONFormatter,
-        },
-    },
-    "handlers": {
-        "json_stream": {
-            "level": "DEBUG",
-            "class": "logging.StreamHandler",
-            "formatter": "json",
-            "stream": sys.stdout,
-        },
-    },
-    "loggers": {
-        "celery": {
-            "handlers": ["json_stream"],
-            "level": "INFO",
-            "propagate": False,
-        },
-    },
-}
 
 # Email
 EMAIL_BACKEND = "djcelery_email.backends.CeleryEmailBackend"
@@ -265,19 +237,19 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TIMEZONE = "Europe/Moscow"
 CELERY_RESULT_SERIALIZER = "json"
-CELERY_BROKER_URL = f"redis://{getenv('REDIS_HOST', 'redis')!s}:{getenv('REDIS_PORT', 6379)!s}/0"  # noqa: PLW1508
-CELERY_RESULT_BACKEND = (
-    f"redis://{getenv('REDIS_HOST', 'redis')!s}:{getenv('REDIS_PORT', 6379)!s}/0"  # noqa: PLW1508
-)
+CELERY_BROKER_URL = "redis://redis:6379/0"
+CELERY_RESULT_BACKEND = "redis://redis:6379/0"
 if TESTING:
     CELERY_EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 
+
 AUTH_USER_MODEL = "user.User"
 # SMS
+SMS_LOGIN = getenv("SMS_LOGIN", "")
+SMS_PASSWORD = getenv("SMS_PASSWORD", "")
 SMS_DEBUG = DEBUG or TESTING
-SMSC_BASE_URL = "https://smsc.ru/sys/send.php"
-SMSC_LOGIN = getenv("SMSC_LOGIN")
-SMSC_PASSWORD = getenv("SMSC_PASSWORD")
+SMSR_BASE_URL = "https://smsc.ru/sys/send.php"
+
 
 if "SENTRY_DSN" in environ:
     import sentry_sdk
@@ -286,8 +258,6 @@ if "SENTRY_DSN" in environ:
 
     sentry_sdk.init(
         dsn=environ["SENTRY_DSN"],
-        environment=environ.get("SENTRY_ENVIRONMENT"),
-        traces_sample_rate=1.0,
         integrations=[DjangoIntegration(), CeleryIntegration()],
     )
 
@@ -302,6 +272,14 @@ ROBOTS_USE_SITEMAP = True
 ROBOTS_CACHE_TIMEOUT = None
 ROBOTS_SITE_BY_REQUEST = True
 ROBOTS_SITEMAP_VIEW_NAME = "sitemap"
+
+REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.DjangoFilterBackend",),
+    "DEFAULT_AUTHENTICATION_CLASSES": ["rest_framework.authentication.SessionAuthentication"],
+}
+if not DEBUG:
+    REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = ["rest_framework.renderers.JSONRenderer"]
 
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
@@ -349,26 +327,11 @@ if IMGPROXY_KEY and IMGPROXY_SALT:
     IMGPROXY_SECURE = True
 
 # S3
-AWS_ACCESS_KEY_ID = getenv("YND_ACCESS_KEY_ID", None)
-AWS_SECRET_ACCESS_KEY = getenv("YND_SECRET_ACCESS_KEY", None)
-AWS_STORAGE_BUCKET_NAME = getenv("YND_STORAGE_BUCKET_NAME", None)
+AWS_ACCESS_KEY_ID = getenv("YND_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = getenv("YND_SECRET_ACCESS_KEY")
+AWS_STORAGE_BUCKET_NAME = getenv("YND_STORAGE_BUCKET_NAME")
 AWS_S3_ENDPOINT_URL = "https://storage.yandexcloud.net"
 AWS_DEFAULT_ACL = None
 AWS_LOCATION = getenv("YND_LOCATION", "media")
 AWS_QUERYSTRING_AUTH = False
 AWS_S3_FILE_OVERWRITE = False
-
-if TESTING or (
-    AWS_ACCESS_KEY_ID is None or AWS_SECRET_ACCESS_KEY is None or AWS_STORAGE_BUCKET_NAME is None
-):
-    DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
-    BASE_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
-else:
-    DEFAULT_FILE_STORAGE = "common.storages.HashedFilenameS3Boto3Storage"
-    BASE_FILE_STORAGE = "common.storages.CustomS3Boto3Storage"
-
-# Yandex CAPTCHA
-YND_CAPTCHA_SERVER_KEY = getenv("YND_CAPTCHA_SERVER_KEY", None)
-
-# Django JSONSchemaForm
-DJANGO_JSONFORM = {"FILE_HANDLER": "/json-file-handler/"}

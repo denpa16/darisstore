@@ -12,8 +12,10 @@ exclude_lines =
 omit =
     config/*
     common/*
+    properties/utils.py
+    properties/querysets.py
     */migrations/*
-    **/tests/**
+    tests/*
     manage.py
 
 ignore_errors = False

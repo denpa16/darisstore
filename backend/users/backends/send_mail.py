@@ -4,7 +4,6 @@ from config import settings
 
 
 def send_mail(subject, message, email: str, html_message=None):
-    """Отправка сообщения на почту."""
     connection = get_connection(
         backend=settings.EMAIL_BACKEND,
         host=settings.EMAIL_HOST,

@@ -1,13 +1,6 @@
 resolver 127.0.0.11 valid=5s ipv6=off;
 
-proxy_cache_path /var/lib/nginx/proxy_cache levels=1:2 keys_zone=CACHE:15m max_size=5G inactive=30d;
-proxy_cache_path /var/lib/nginx/api_cache levels=1:2 keys_zone=API_CACHE:15m max_size=5g inactive=60m use_temp_path=off;
-
-#limit_req_zone $binary_remote_addr zone=req_limit:10m rate=15r/s;
-#limit_conn_zone $binary_remote_addr zone=addr:10m;
-
-# подключение логирования в формате json
-include json_logging;
+proxy_cache_path /var/lib/nginx/proxy_cache levels=1:2 keys_zone=CACHE:15m max_size=1G;
 
 map $server_port $x_forwarded_host {
     default $host:$server_port;
@@ -15,37 +8,19 @@ map $server_port $x_forwarded_host {
     443     $host;
 }
 
-# Защита от других доменов
-server {
-  listen 80 default_server;
-  listen [::]:80 default_server;
-  return 301 https://<%= $SITE_HOST %>;
-}
+# Metric exporters
+<% if [ "$ENVIRONMENT" = "production" ]; then -%>
+    include exporters.conf;
+<% fi; -%>
 
 
-server {
-    server_name _;
-    <% if [ "$TLS_MODE" != "off" ]; then -%>
-        listen 443 ssl http2;
-        include ssl_params;
-        add_header Strict-Transport-Security "max-age=31536000";
-    <% else -%>
-        listen 80;
-    <% fi -%>
-    return 301 https://<%= $SITE_HOST %>;
-}
-
+# Main Site
 
 <% if [ "$TLS_MODE" != "off" ]; then -%>
     server {
         server_name <%= $SITE_HOST %>;
 
         listen 80;
-
-        # Для выпуска нового сертификата, когда истек текущий
-        location /.well-known/acme-challenge/ {
-            root /var/www/local_static/;
-        }
 
         return 301 https://$host$request_uri;
     }
@@ -57,7 +32,6 @@ server {
     <% if [ "$TLS_MODE" != "off" ]; then -%>
         listen 443 ssl http2;
         include ssl_params;
-        add_header Strict-Transport-Security "max-age=31536000";
     <% else -%>
         listen 80;
     <% fi -%>
@@ -76,39 +50,8 @@ server {
     http2_push_preload on;
     client_max_body_size 5M;
     merge_slashes off;
-    #add_header X-Frame-Options "SAMEORIGIN";
-    # Если используется я.метрика и вебвизор для контроля карты кликов
-    # использовать установку заголовка с проверкой(5 строк ниже), иначе - строку выше, замените template\.idacloud\.ru на ваши домены
-    set $frame_options '';
-    if ($http_referer !~ '^https?:\/\/([^\/]+\.)?(template\.idacloud\.ru|webvisor\.com|metri[ck]a\.yandex\.(com|ru|by|com\.tr))\/'){
-        set $frame_options 'SAMEORIGIN';
-    }
-    add_header X-Frame-Options $frame_options;
 
-    # Настройки лимитирования подключений с одного ip адреса
-    # ТЕСТОВОЕ количество запросов перед релизом поменять!
-    #limit_req zone=req_limit burst=15;
-    #limit_req_status 429;
-    #limit_conn addr 30;
-
-    proxy_intercept_errors on;
     error_page 497 https://$host:$server_port$request_uri;
-
-    error_page 404 /404.html;
-    location /404.html {
-        root /var/www/error_pages/;
-        internal;
-    }
-    error_page 500 /500.html;
-    location /500.html {
-        root /var/www/error_pages/;
-        internal;
-    }
-    error_page 502 503 504 505 /50x.html;
-    location /50x.html {
-        root /var/www/error_pages/;
-        internal;
-    }
 
     <% if [ "$ENVIRONMENT" = "production" ]; then -%>
         location /s/ {
@@ -122,58 +65,44 @@ server {
         }
     <% else -%>
         location /s/ {
-            alias /var/www/static/;
-            expires 365d;
+            include backend;
         }
     <% fi; -%>
 
 
     location /api/ {
         include backend;
-        proxy_cache API_CACHE;
-        proxy_cache_methods GET;
-        proxy_cache_key "$request_uri|$request_method";
-        proxy_cache_valid 200 15m;
-        proxy_cache_valid 404 1m;
-        proxy_cache_use_stale error timeout updating http_500 http_502 http_503 http_504;
-        add_header X-Cache-Status $upstream_cache_status;
-    }
-
-    location /sitemap.xml {
-        <% if [ "$HTPASSWD_NODE" != "off" ]; then -%>
-        auth_basic "Restricted Content";
-        auth_basic_user_file /etc/nginx/.htpasswd;
-        <% fi; -%>
-        include backend;
-        proxy_cache API_CACHE;
-        proxy_cache_methods GET;
-        proxy_cache_key "$request_uri|$request_method";
-        proxy_cache_valid 200 15m;
-        proxy_cache_valid 404 1m;
-        proxy_cache_use_stale error timeout updating http_500 http_502 http_503 http_504;
-        add_header X-Cache-Status $upstream_cache_status;
     }
 
     location /admin/ {
-        auth_basic "Prove yourself worthy!";
-        auth_basic_user_file /etc/nginx/admin_htpasswd;
         client_max_body_size 250M;
         include backend;
     }
+
+    location /flower/ {
+        set $flower http://flower:5555;
+        proxy_pass $flower;
+        proxy_set_header Host $host;
+        proxy_redirect off;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+
 
     location /robots.txt {
         include backend;
     }
 
-    location ~ ^/pdf/(.*)$ {
-        proxy_pass "http://pdf.idacloud.ru/pdf/$scheme://$host/$1?$args";
+    location ~ ^/storage/(?<storageUrl>(.*))$ {
+        proxy_pass "https://storage.yandexcloud.net/neometry-media/media/$storageUrl";
     }
 
     location /.well-known/acme-challenge/ {
         root /var/www/local_static/;
     }
 
-    <% if [ "$ENVIRONMENT" = "production" ]; then -%>
+        <% if [ "$ENVIRONMENT" = "production" ]; then -%>
 	    location @frontend {
             include frontend;
 	    }
@@ -188,21 +117,4 @@ server {
 	    }
     <% fi; -%>
 
-    # Если вам нужно развернуть доступ к imgproxy на отдельном текущем, то раскоментируйте эти строки
-    location ~ ^/proxy/(.*)$ {
-        add_header X-Cache-Status $upstream_cache_status;
-        expires 3y;
-
-        proxy_cache CACHE;
-        proxy_cache_valid      200  30d;
-        proxy_cache_use_stale  error timeout invalid_header updating http_500 http_502 http_503 http_504;
-        proxy_cache_background_update on;
-        proxy_cache_lock on;
-        proxy_cache_lock_age 30s;
-        proxy_cache_lock_timeout 30s;
-        proxy_cache_key $scheme://$host$uri;
-
-        set $img_upstream http://imgproxy:8080;
-        proxy_pass $img_upstream/$1$is_args$args;
-    }
 }

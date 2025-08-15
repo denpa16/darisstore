@@ -1,6 +1,11 @@
 version: '3.8'
 
 services:
+  nginx:
+    environment:
+      - TLS_MODE=off
+
+
   backend:
     restart: unless-stopped
     volumes:
@@ -16,20 +21,9 @@ services:
 
   db:
     restart: unless-stopped
-    volumes:
-      - postgresdata:/var/lib/postgresql/data
     ports:
       - 15239:5432
 
   redis:
-    volumes:
-      - redisdata:/data
     ports:
       - 6379:6379
-
-volumes:
-  redisdata:
-  postgresdata:
-  static:
-  nginx_cache:
-  api_cache:

@@ -3,7 +3,7 @@ import hashlib
 import hmac
 import textwrap
 
-from rest_framework.fields import FileField, ListField, get_attribute
+from rest_framework.fields import FileField, get_attribute
 
 from config.settings import IMGPROXY_FULL_PATH, IMGPROXY_KEY, IMGPROXY_SALT, IMGPROXY_SECURE
 
@@ -18,18 +18,16 @@ except ImportError:
 
 
 class MultiImageField(FileField):
-    """Мета-класс для формирования display и preview изображений."""
-
-    def _generate_insecure_url(self, instance, origin_attr, attr_name, img_format) -> str | None:
-        """Генерация незащищенного URL."""
+    def _generate_insecure_url(self, instance, origin_attr, attr_name, img_format):
+        """Генерация незащищенного URL"""
         link = getattr(instance, f"{attr_name}_default")
         try:
             return link + getattr(instance, origin_attr).url + f"@{img_format}"
         except ValueError:
             return None
 
-    def _generate_secure_url(self, instance, origin_attr, attr_name, img_format) -> str | None:
-        """Генерация защищенного URL."""
+    def _generate_secure_url(self, instance, origin_attr, attr_name, img_format):
+        """Генерация защищенного URL"""
         # Получаем hex от ключа и соли
         key = bytes.fromhex(IMGPROXY_KEY)
         salt = bytes.fromhex(IMGPROXY_SALT)
@@ -57,8 +55,7 @@ class MultiImageField(FileField):
         except ValueError:
             return None
 
-    def get_attribute(self, instance) -> str | None:
-        """Получение аттрибутов запроса."""
+    def get_attribute(self, instance):
         request = self.context["request"]
         if not instance:
             return None
@@ -89,20 +86,8 @@ class MultiImageField(FileField):
 
         if IMGPROXY_SECURE:
             return self._generate_secure_url(instance, origin_attr, attr_name, img_format)
-        return self._generate_insecure_url(instance, origin_attr, attr_name, img_format)
+        else:
+            return self._generate_insecure_url(instance, origin_attr, attr_name, img_format)
 
-    def to_representation(self, value) -> str:
-        """To representation."""
+    def to_representation(self, value):
         return value
-
-
-class PointField(ListField):
-    """PointField."""
-
-    def to_representation(self, point: str) -> None:
-        """To representation."""
-        if point:
-            point = point.replace(" ", "")
-            sep = ","
-            point = point.split(sep)
-        return super().to_representation(point)
