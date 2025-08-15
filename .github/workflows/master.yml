@@ -7,30 +7,63 @@ on:
       - develop
       - stage
 
-jobs:
-  #build:
-  #  runs-on: ubuntu-latest
-  #  environment:
-  #    name: ${{ github.ref_name }}
-  #  steps:
-  #    - name: checkout repo
-  #      uses: actions/checkout@v3
-  #    - name: Use environment variable
-  #      run: echo "The SERVER_API_URL is ${{ vars.SERVER_API_URL }}"
-  #    - name: build frontend
-  #      run:  docker compose -f docker-compose.yml -f docker-compose.frontend.yml build frontend
-  #    - name: build backend
-  #      run:  docker compose -f docker-compose.yml -f docker-compose.production.yml build backend
-  #    - name: build nginx
-  #      run:  docker compose -f docker-compose.yml -f docker-compose.production.yml build nginx
+env:
+  SECRET_KEY: ${{ vars.SECRET_KEY }}
+  POSTGRES_NAME: ${{ vars.POSTGRES_NAME }}
+  POSTGRES_PORT: ${{ vars.POSTGRES_PORT }}
+  POSTGRES_HOST: ${{ vars.POSTGRES_HOST }}
+  POSTGRES_USER: ${{ vars.POSTGRES_USER }}
+  POSTGRES_PASSWORD: ${{ vars.POSTGRES_PASSWORD }}
+  TLS_MODE: ${{ vars.TLS_MODE }}
+  HTPASSWD_MODE: ${{ vars.HTPASSWD_MODE }}
+  HTPASSWD: ${{ vars.HTPASSWD }}
+  SITE_HOST: ${{ vars.SITE_HOST }}
+  SERVER_API_URL: ${{ vars.SERVER_API_URL }}
+  PROXY_URL: ${{ vars.PROXY_URL }}
+  IMGPROXY_DEVELOPMENT_ERRORS_MODE: ${{ vars.IMGPROXY_DEVELOPMENT_ERRORS_MODE }}
+  IMGPROXY_MAX_SRC_RESOLUTION: ${{ vars.IMGPROXY_MAX_SRC_RESOLUTION}}
+  IMGPROXY_ALLOWED_SOURCES: ${{ vars.IMGPROXY_ALLOWED_SOURCES }}
+  IMGPROXY_SITE_HOST: ${{ vars.IMGPROXY_SITE_HOST }}
+  IMGPROXY_KEY: ${{ vars.IMGPROXY_KEY }}
+  IMGPROXY_SALT: ${{ vars.IMGPROXY_SALT }}
+  IMGPROXY_IGNORE_SSL_VERIFICATION: ${{ vars.IMGPROXY_IGNORE_SSL_VERIFICATION }}
+  YND_ACCESS_KEY_ID: ${{ vars.YND_ACCESS_KEY_ID }}
+  YND_SECRET_ACCESS_KEY: ${{ vars.YND_SECRET_ACCESS_KEY }}
+  YND_STORAGE_BUCKET_NAME: ${{ vars.YND_STORAGE_BUCKET_NAME }}
+  YND_STORAGE_ENDPOINT_URL: ${{ vars.YND_STORAGE_ENDPOINT_URL }}
+  LOKI_USERNAME: ${{ vars.LOKI_USERNAME }}
+  LOKI_PASSWORD: ${{ vars.LOKI_PASSWORD }}
+  SERVER_NAME: ${{ vars.SERVER_NAME }}
+  PROJECT_NAME: ${{ vars.PROJECT_NAME }}
+  CADVISOR_URL: ${{ vars.CADVISOR_URL }}
+  IMGPROXY_URL: ${{ vars.IMGPROXY_URL }}
+  AGENT_URL: ${{ vars.AGENT_URL }}
+  LOKI_URL: ${{ vars.LOKI_URL }}
+  BRANCH_NAME: ${{ vars.BRANCH_NAME }}
+  ADMIN_HTPASSWD: ${{ vars.ADMIN_HTPASSWD }}
 
-  deploy:
-    #needs: ["build"]
-    runs-on: self-hosted
+jobs:
+  build:
     environment:
       name: ${{ github.ref_name }}
-    env:
-      BRANCH_NAME: ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@v3
+      - name: Use environment variable
+        run: echo "The SITE_HOST is ${{ vars.SITE_HOST }}"
+      - name: build frontend
+        run:  docker compose -f docker-compose.yml -f docker-compose.frontend.yml build frontend
+      - name: build backend
+        run:  docker compose -f docker-compose.yml -f docker-compose.production.yml build backend
+      - name: build nginx
+        run:  docker compose -f docker-compose.yml -f docker-compose.production.yml build nginx
+
+  deploy:
+    environment:
+      name: ${{ github.ref_name }}
+    needs: ["build"]
+    runs-on: self-hosted
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
