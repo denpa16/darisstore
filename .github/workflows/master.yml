@@ -16,11 +16,11 @@ jobs:
       - name: checkout repo
         uses: actions/checkout@v3
       - name: build frontend
-        run:  docker-compose -f docker-compose.yml -f docker-compose.frontend.yml build frontend
+        run:  docker compose -f docker-compose.yml -f docker-compose.frontend.yml build frontend
       - name: build backend
-        run:  docker-compose -f docker-compose.yml -f docker-compose.production.yml build backend
+        run:  docker compose -f docker-compose.yml -f docker-compose.production.yml build backend
       - name: build nginx
-        run:  docker-compose -f docker-compose.yml -f docker-compose.production.yml build nginx
+        run:  docker compose -f docker-compose.yml -f docker-compose.production.yml build nginx
 
   deploy:
     runs-on: self-hosted
