@@ -41,6 +41,7 @@ env:
   LOKI_URL: ${{ vars.LOKI_URL }}
   BRANCH_NAME: ${{ vars.BRANCH_NAME }}
   ADMIN_HTPASSWD: ${{ vars.ADMIN_HTPASSWD }}
+  REDIS_DSN: ${{ vars.REDIS_DSN }}
 
 jobs:
   build:
