@@ -8,25 +8,27 @@ on:
       - stage
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    environment:
-      name: ${{ github.ref_name }}
-    steps:
-      - name: checkout repo
-        uses: actions/checkout@v3
-      - name: Use environment variable
-        run: echo "The SERVER_API_URL is ${{ vars.SERVER_API_URL }}"
-      - name: build frontend
-        run:  docker compose -f docker-compose.yml -f docker-compose.frontend.yml build frontend
-      - name: build backend
-        run:  docker compose -f docker-compose.yml -f docker-compose.production.yml build backend
-      - name: build nginx
-        run:  docker compose -f docker-compose.yml -f docker-compose.production.yml build nginx
+  #build:
+  #  runs-on: ubuntu-latest
+  #  environment:
+  #    name: ${{ github.ref_name }}
+  #  steps:
+  #    - name: checkout repo
+  #      uses: actions/checkout@v3
+  #    - name: Use environment variable
+  #      run: echo "The SERVER_API_URL is ${{ vars.SERVER_API_URL }}"
+  #    - name: build frontend
+  #      run:  docker compose -f docker-compose.yml -f docker-compose.frontend.yml build frontend
+  #    - name: build backend
+  #      run:  docker compose -f docker-compose.yml -f docker-compose.production.yml build backend
+  #    - name: build nginx
+  #      run:  docker compose -f docker-compose.yml -f docker-compose.production.yml build nginx
 
   deploy:
-    needs: ["build"]
+    #needs: ["build"]
     runs-on: self-hosted
+    environment:
+      name: ${{ github.ref_name }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
