@@ -1,16 +1,3 @@
-# Сайт Спортивного клуба ШАГ
-
-***
-
-## Приложения и доступы
-
-Development (branch **master**)
-
-| №   | Сайт             | Название | Логин:Пароль |
-|-----|------------------|----------|--------------|
-| 1.  | https://skshag.ru| Сайт     |              |
-
-
 ## [Инструкция по pre-commit](docs/pre-commit.md)
 
 ## ENV-файл Backend
@@ -44,8 +31,8 @@ SITE_HOST=localhost
 HTPASSWD_MODE=off
 TLS_MODE=off
 SENTRY_ENV=local
-SERVER_API_URL=https://tourmetria.tsacloud.com/
-PROXY_URL=https://tourmetria.tsacloud.com/
-IMGPROXY_SITE_HOST=https://tourmetria.tsacloud.com/proxy
+SERVER_API_URL=
+PROXY_URL=
+IMGPROXY_SITE_HOST=
 
 ```
