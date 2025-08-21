@@ -110,3 +110,11 @@ class UserViewSet(GenericViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
+    @action(detail=False, methods=["GET"])
+    def me(self, request):
+        """Получение авторизованного пользователя."""
+        if not bool(request.user and request.user.is_authenticated):
+            return Response({"ok": False, "errors": "not authorized"})
+        serializer: UserSerializer = self.get_serializer(instance=request.user)
+        return Response(serializer.data)
