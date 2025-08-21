@@ -14,6 +14,7 @@ TESTING = "test" in argv or any("pytest" in a for a in argv)
 DEBUG = getenv("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = ["*"]
+CSRF_TRUSTED_ORIGINS = [f"https://{SITE_HOST}"]
 
 # Application definition
 
